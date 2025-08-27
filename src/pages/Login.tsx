@@ -20,7 +20,7 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      navigate('/gate') // após login, vai para a tela de opções (LOJA/ADM)
+  navigate('/sell') // após login, vai direto para a página de vendas
     } catch (e: any) {
       setErr(e?.message || 'Falha ao entrar.')
     } finally {
@@ -38,7 +38,7 @@ export default function Login() {
         setMsg('Conta criada! Verifique seu e-mail para confirmar e depois faça login.')
       } else {
         // caso o projeto não exija confirmação por e-mail
-        navigate('/gate')
+  navigate('/sell')
       }
     } catch (e: any) {
       setErr(e?.message || 'Falha ao criar a conta.')
@@ -123,6 +123,18 @@ export default function Login() {
               </button>
             )}
           </form>
+
+          {/* Botão discreto para área administrativa */}
+          <div className="flex justify-center mt-2">
+            <button
+              type="button"
+              onClick={() => navigate('/adm')}
+              className="text-xs text-zinc-500 px-3 py-1 rounded hover:bg-zinc-100 border border-transparent"
+              style={{ opacity: 0.7 }}
+            >
+              ENTRE COMO ADMIN
+            </button>
+          </div>
         </div>
 
         {/* Dica simples, sem status de sessão */}

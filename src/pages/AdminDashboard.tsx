@@ -468,6 +468,7 @@ export default function AdminDashboard() {
           <a href="/adm/stock"><Button>Estoque</Button></a>
           <a href="/adm/reports"><Button>Relatórios</Button></a>
           <a href="/adm/settings"><Button>Configurações</Button></a>
+          <a href="/adm/users"><Button>Usuários</Button></a>
           <a href="/loja"><Button className="bg-zinc-800">Ir para PDV</Button></a>
         </div>
       </Card>
