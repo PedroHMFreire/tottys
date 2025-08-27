@@ -1,0 +1,74 @@
+import { supabase } from '@/lib/supabaseClient'
+
+export type SaleItemInput = {
+  product_id?: string | null
+  qtde: number
+  preco_unit: number
+  desconto?: number
+}
+
+function isUUID(id?: string) {
+  return !!id && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(id)
+}
+
+/**
+ * Cria a venda em `sales` e os itens em `sale_items`.
+ * Se não conseguir (ex.: sem login/RLS/loja mock), volta um saleId local (persisted=false).
+ */
+export async function createSaleWithItems(opts: {
+  storeId?: string
+  userId?: string
+  customerId?: string | null
+  items: SaleItemInput[]
+  total: number
+  desconto?: number
+  status?: 'PAGA' | 'PENDENTE' | 'CANCELADA'
+}) {
+  const { storeId, userId, customerId, items, total } = opts
+  const desconto = opts.desconto ?? 0
+  const status = opts.status ?? 'PAGA'
+
+  // fallback local (funciona mesmo sem banco)
+  const localId = 'sale-' + Date.now()
+
+  // Se a store não é um UUID real (ex.: loja mock), não tenta no banco
+  if (!isUUID(storeId)) {
+    return { saleId: localId, persisted: false }
+  }
+
+  try {
+    // cria a venda
+    const { data: sale, error: saleErr } = await supabase
+      .from('sales')
+      .insert({
+        store_id: storeId,
+        user_id: userId ?? null,
+        customer_id: customerId ?? null,
+        total,
+        desconto,
+        status,
+      })
+      .select()
+      .single()
+
+    if (saleErr || !sale) throw saleErr || new Error('Falha ao criar venda')
+
+    // itens
+    if (items.length) {
+      const payload = items.map(it => ({
+        sale_id: sale.id,
+        product_id: it.product_id ?? null,
+        qtde: it.qtde,
+        preco_unit: it.preco_unit,
+        desconto: it.desconto ?? 0,
+      }))
+      const { error: itemsErr } = await supabase.from('sale_items').insert(payload)
+      if (itemsErr) throw itemsErr
+    }
+
+    return { saleId: sale.id as string, persisted: true }
+  } catch (e) {
+    console.error('createSaleWithItems error', e)
+    return { saleId: localId, persisted: false }
+  }
+}
