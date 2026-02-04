@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-
-type Role = 'ADMIN' | 'GERENTE' | 'GESTOR' | 'VENDEDOR' | 'ANON'
+import type { Role } from '@/domain/types'
 
 export function useRole() {
   const [role, setRole] = useState<Role>('ANON')
@@ -36,7 +35,7 @@ export function useRole() {
     return () => { mounted = false }
   }, [])
 
-  const admin = role === 'ADMIN' || role === 'GERENTE' || role === 'GESTOR'
+  const admin = role === 'OWNER' || role === 'ADMIN' || role === 'GERENTE' || role === 'GESTOR'
 
   return { role, admin, loading }
 }

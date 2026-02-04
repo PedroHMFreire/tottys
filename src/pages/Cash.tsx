@@ -4,6 +4,8 @@ import { useApp } from '@/state/store'
 import Button from '@/ui/Button'
 import Card from '@/ui/Card'
 import { formatBRL } from '@/lib/currency'
+import Toast, { type ToastItem } from '@/ui/Toast'
+import { logActivity } from '@/lib/activity'
 
 type CashRow = {
   id: string
@@ -33,6 +35,11 @@ export default function Cash() {
   const [loading, setLoading] = useState(false)
   const [cash, setCash] = useState<CashRow | null>(null)
   const [totals, setTotals] = useState<Totals>({ dinheiro: 0, pix: 0, cartao: 0, suprimentos: 0, sangrias: 0 })
+  const [lockedClose, setLockedClose] = useState(false)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  function pushToast(kind: ToastItem['kind'], message: string) {
+    setToasts(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, kind, message }])
+  }
 
   // Form states
   const [valorInicial, setValorInicial] = useState<string>('0')
@@ -127,7 +134,7 @@ export default function Cash() {
   }, [cash, totals])
 
   async function abrirCaixa() {
-    if (!store) return alert('Selecione uma loja em Config.')
+    if (!store) return pushToast('error', 'Selecione uma loja em Config.')
     const valor = Math.max(0, Number(valorInicial || 0))
     setLoading(true)
     try {
@@ -147,7 +154,8 @@ export default function Cash() {
           status: (row?.status as 'ABERTO' | 'FECHADO') ?? 'ABERTO',
         })
         setTotals({ dinheiro: 0, pix: 0, cartao: 0, suprimentos: 0, sangrias: 0 })
-        alert('Caixa ABERTO com sucesso.')
+        pushToast('success', 'Caixa aberto com sucesso.')
+        logActivity(`Caixa aberto • ${formatBRL(valor)}${store?.nome ? ` • ${store.nome}` : ''}`, 'success')
       } else {
         // demo
         const demo: CashRow = {
@@ -164,10 +172,11 @@ export default function Cash() {
         localStorage.removeItem(`${demoKey}_movs`)
         setCash(demo)
         setTotals({ dinheiro: 0, pix: 0, cartao: 0, suprimentos: 0, sangrias: 0 })
-        alert('Caixa ABERTO (modo demo).')
+        pushToast('info', 'Caixa aberto (modo demo).')
+        logActivity(`Caixa aberto (demo) • ${formatBRL(valor)}${store?.nome ? ` • ${store.nome}` : ''}`, 'info')
       }
     } catch (e: any) {
-      alert(e.message || 'Falha ao abrir caixa.')
+      pushToast('error', e.message || 'Falha ao abrir caixa.')
     } finally {
       setLoading(false)
     }
@@ -176,7 +185,10 @@ export default function Cash() {
   async function registrarMovimento() {
     if (!cash) return
     const valor = Number(movValor || 0)
-    if (valor <= 0) return alert('Informe um valor maior que zero.')
+    if (valor <= 0) return pushToast('error', 'Informe um valor maior que zero.')
+    if (movTipo === 'SANGRIA' && valor > esperado) {
+      return pushToast('error', 'Sangria maior que o valor disponível no gaveteiro.')
+    }
     setLoading(true)
     try {
       if (isUUID(cash.id)) {
@@ -190,7 +202,8 @@ export default function Cash() {
         await loadTotals()
         setMovValor('0')
         setMovMotivo('')
-        alert(`${movTipo} registrado.`)
+        pushToast('success', `${movTipo} registrado.`)
+        logActivity(`${movTipo} registrado • ${formatBRL(valor)}${store?.nome ? ` • ${store.nome}` : ''}`, 'info')
       } else {
         // demo
         const savedMov = localStorage.getItem(`${demoKey}_movs`)
@@ -200,10 +213,11 @@ export default function Cash() {
         await loadTotals()
         setMovValor('0')
         setMovMotivo('')
-        alert(`${movTipo} registrado (demo).`)
+        pushToast('info', `${movTipo} registrado (demo).`)
+        logActivity(`${movTipo} registrado (demo) • ${formatBRL(valor)}${store?.nome ? ` • ${store.nome}` : ''}`, 'info')
       }
     } catch (e: any) {
-      alert(e.message || 'Falha ao registrar movimento.')
+      pushToast('error', e.message || 'Falha ao registrar movimento.')
     } finally {
       setLoading(false)
     }
@@ -212,7 +226,14 @@ export default function Cash() {
   async function fecharCaixa() {
     if (!cash) return
     const contado = Number(valorContado || 0)
+    if (lockedClose) return
+    if (contado < 0) return pushToast('error', 'Valor contado inválido.')
+    if (Math.abs(contado - esperado) > 1000) {
+      const ok = confirm('Diferença muito alta. Deseja continuar?')
+      if (!ok) return
+    }
     setLoading(true)
+    setLockedClose(true)
     try {
       if (isUUID(cash.id)) {
         const { data, error } = await supabase.rpc('fechar_caixa', {
@@ -223,33 +244,31 @@ export default function Cash() {
         if (error) throw error
         const row = Array.isArray(data) ? data[0] : data
         const dif = Number(row?.diferenca || 0)
-        alert(`Caixa FECHADO.
-Esperado em dinheiro: ${formatBRL(Number(row?.esperado_em_dinheiro || 0))}
-Contado: ${formatBRL(Number(row?.contado_em_dinheiro || 0))}
-Diferença: ${formatBRL(dif)}`)
+        pushToast('success', `Caixa fechado. Diferença: ${formatBRL(dif)}`)
+        logActivity(`Caixa fechado • Diferença: ${formatBRL(dif)}${store?.nome ? ` • ${store.nome}` : ''}`, 'success')
         setCash(null)
         setTotals({ dinheiro: 0, pix: 0, cartao: 0, suprimentos: 0, sangrias: 0 })
       } else {
         // demo
         const dif = contado - esperado
-        alert(`Caixa FECHADO (demo).
-Esperado em dinheiro: ${formatBRL(esperado)}
-Contado: ${formatBRL(contado)}
-Diferença: ${formatBRL(dif)}`)
+        pushToast('info', `Caixa fechado (demo). Diferença: ${formatBRL(dif)}`)
+        logActivity(`Caixa fechado (demo) • Diferença: ${formatBRL(dif)}${store?.nome ? ` • ${store.nome}` : ''}`, 'info')
         localStorage.removeItem(demoKey)
         localStorage.removeItem(`${demoKey}_movs`)
         setCash(null)
         setTotals({ dinheiro: 0, pix: 0, cartao: 0, suprimentos: 0, sangrias: 0 })
       }
     } catch (e: any) {
-      alert(e.message || 'Falha ao fechar caixa.')
+      pushToast('error', e.message || 'Falha ao fechar caixa.')
     } finally {
       setLoading(false)
+      setLockedClose(false)
     }
   }
 
   return (
     <div className="pb-24 max-w-md mx-auto p-4 space-y-4">
+      <Toast toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
       <h1 className="text-2xl font-bold">Caixa</h1>
 
       {!store && (
@@ -368,7 +387,7 @@ Diferença: ${formatBRL(dif)}`)
                   className="w-full rounded-2xl border px-3 py-2"
                 />
               </div>
-              <Button onClick={fecharCaixa} disabled={loading}>Fechar</Button>
+              <Button onClick={fecharCaixa} disabled={loading || lockedClose}>Fechar</Button>
             </div>
           </Card>
         </>

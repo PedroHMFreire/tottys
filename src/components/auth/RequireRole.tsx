@@ -1,58 +1,45 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAreas } from '@/hooks/useAreas'
 import { supabase } from '@/lib/supabaseClient'
+import type { Role } from '@/domain/types'
+import { isRoleAllowed } from '@/auth/permissions'
 import Button from '@/ui/Button'
 
-type Role = 'OWNER' | 'ADMIN' | 'GERENTE' | 'GESTOR' | 'VENDEDOR' | null
-
-export default function RequireArea({
-  area,
-  mode = 'any',
+export default function RequireRole({
+  roles,
   children,
 }: {
-  area: string | string[]
-  mode?: 'any' | 'all'  // 'any' = precisa de pelo menos 1; 'all' = precisa de todas
+  roles?: Role | Role[]
   children: ReactNode
 }) {
   const navigate = useNavigate()
   const loc = useLocation()
-
-  // 1) Carrega papel para liberar OWNER independentemente das áreas
-  const [role, setRole] = useState<Role>(null)
-  const [roleLoading, setRoleLoading] = useState(true)
+  const [role, setRole] = useState<Role>('ANON')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) { if (mounted) { setRole(null); setRoleLoading(false) }; return }
+        if (!user) {
+          if (mounted) { setRole('ANON'); setLoading(false) }
+          return
+        }
         const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
         if (mounted) setRole((data?.role as Role) ?? 'VENDEDOR')
       } finally {
-        if (mounted) setRoleLoading(false)
+        if (mounted) setLoading(false)
       }
     })()
     return () => { mounted = false }
   }, [])
 
-  // 2) Áreas (continua funcionando p/ ADMIN/GERENTE/GESTOR)
-  const { has, loading: areasLoading } = useAreas()
-
-  if (roleLoading || areasLoading) {
+  if (loading) {
     return <div className="p-6 text-sm">Carregando permissões…</div>
   }
 
-  // 👉 Bypass: OWNER sempre pode
-  if (role === 'OWNER') {
-    return <>{children}</>
-  }
-
-  const required = Array.isArray(area) ? area : [area]
-  const ok = mode === 'all'
-    ? required.every(a => has(a))
-    : required.some(a => has(a))
+  const ok = isRoleAllowed(role, roles)
 
   if (!ok) {
     const next = encodeURIComponent(loc.pathname + loc.search)

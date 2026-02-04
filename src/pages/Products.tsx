@@ -1,6 +1,6 @@
 // pages/products.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabaseClient';
 import { useSearchParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ import Button from '@/ui/Button';
 import Card from '@/ui/Card';
 import ImportBatchModal from '@/components/products/ImportBatchModal';
 import NewProductModal from '@/components/products/NewProductModal';
+import { useApp } from '@/state/store';
 
 type Product = {
   id: string;
@@ -50,6 +51,26 @@ function EditableProductRow({ product, onUpdate }: EditableProductRowProps) {
     setSaving(true);
     setError(null);
     try {
+      if (fields[field] === product[field]) {
+        setEdit(e => ({ ...e, [field]: false }));
+        return;
+      }
+      if (field === 'nome' && (!fields.nome || fields.nome.trim().length < 2)) {
+        setError('Informe um nome válido (mín. 2 letras).');
+        return;
+      }
+      if (field === 'sku' && (!fields.sku || fields.sku.trim().length < 2)) {
+        setError('Informe um SKU válido (mín. 2 caracteres).');
+        return;
+      }
+      if (field === 'preco' && (Number(fields.preco) < 0 || Number.isNaN(Number(fields.preco)))) {
+        setError('Preço inválido.');
+        return;
+      }
+      if (field === 'barcode' && fields.barcode && fields.barcode.trim().length > 0 && fields.barcode.trim().length < 6) {
+        setError('Código de barras muito curto.');
+        return;
+      }
       const { error } = await supabase
         .from('products')
         .update({ [field]: fields[field] })
@@ -188,6 +209,7 @@ function EditableProductRow({ product, onUpdate }: EditableProductRowProps) {
 
 export default function Products() {
   const [searchParams] = useSearchParams();
+  const { company, setCompany } = useApp();
 
   const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -228,10 +250,19 @@ export default function Products() {
           .select('company_id')
           .eq('id', user.id)
           .maybeSingle();
-        setCompanyId(prof?.company_id ?? null);
+        const cid = company?.id ?? prof?.company_id ?? null;
+        setCompanyId(cid);
+        if (!company && prof?.company_id) {
+          const { data: comp } = await supabase
+            .from('companies')
+            .select('id, nome')
+            .eq('id', prof.company_id)
+            .maybeSingle();
+          if (comp) setCompany(comp as any);
+        }
       }
     })();
-  }, []);
+  }, [company, setCompany]);
 
   useEffect(() => {
     if (searchParams.get('import') === '1') {
@@ -239,10 +270,40 @@ export default function Products() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (company?.id) setCompanyId(company.id);
+  }, [company?.id]);
+
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const catalogInsights = useMemo(() => {
+    if (!products.length) {
+      return {
+        total: 0,
+        inactive: 0,
+        withoutBarcode: 0,
+        negativeMargin: 0,
+        lowPrice: 0,
+        averagePrice: 0,
+      };
+    }
+    const total = products.length;
+    const inactive = products.filter(p => !p.ativo).length;
+    const withoutBarcode = products.filter(p => !p.barcode || p.barcode.trim().length < 6).length;
+    const negativeMargin = products.filter(p => typeof p.custo === 'number' && p.custo > 0 && p.preco < p.custo).length;
+    const lowPrice = products.filter(p => p.preco <= 5).length;
+    const averagePrice = products.reduce((acc, p) => acc + (Number(p.preco) || 0), 0) / total;
+    return {
+      total,
+      inactive,
+      withoutBarcode,
+      negativeMargin,
+      lowPrice,
+      averagePrice,
+    };
+  }, [products]);
 
   async function search() {
     if (!companyId) return;
@@ -315,6 +376,52 @@ export default function Products() {
       </div>
 
       {/* ...Atalhos removidos... */}
+
+      <Card title="Saúde do Catálogo">
+        {catalogInsights.total === 0 ? (
+          <div className="text-sm text-zinc-500">Nenhum produto carregado ainda.</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl border px-3 py-2">
+              <div className="text-xs text-zinc-500">Produtos</div>
+              <div className="text-lg font-semibold">{catalogInsights.total}</div>
+            </div>
+            <div className="rounded-xl border px-3 py-2">
+              <div className="text-xs text-zinc-500">Preço médio</div>
+              <div className="text-lg font-semibold">R$ {catalogInsights.averagePrice.toFixed(2)}</div>
+            </div>
+            <div className="rounded-xl border px-3 py-2">
+              <div className="text-xs text-zinc-500">Sem EAN</div>
+              <div className={catalogInsights.withoutBarcode > 0 ? 'text-lg font-semibold text-amber-700' : 'text-lg font-semibold'}>
+                {catalogInsights.withoutBarcode}
+              </div>
+            </div>
+            <div className="rounded-xl border px-3 py-2">
+              <div className="text-xs text-zinc-500">Inativos</div>
+              <div className={catalogInsights.inactive > 0 ? 'text-lg font-semibold text-amber-700' : 'text-lg font-semibold'}>
+                {catalogInsights.inactive}
+              </div>
+            </div>
+            <div className="rounded-xl border px-3 py-2">
+              <div className="text-xs text-zinc-500">Margem negativa</div>
+              <div className={catalogInsights.negativeMargin > 0 ? 'text-lg font-semibold text-rose-700' : 'text-lg font-semibold'}>
+                {catalogInsights.negativeMargin}
+              </div>
+            </div>
+            <div className="rounded-xl border px-3 py-2">
+              <div className="text-xs text-zinc-500">Preço &le; R$ 5</div>
+              <div className={catalogInsights.lowPrice > 0 ? 'text-lg font-semibold text-amber-700' : 'text-lg font-semibold'}>
+                {catalogInsights.lowPrice}
+              </div>
+            </div>
+          </div>
+        )}
+        {catalogInsights.total > 0 && (
+          <div className="mt-3 text-xs text-zinc-500">
+            Dica rápida: priorize corrigir itens com margem negativa e completar o EAN para agilizar o PDV.
+          </div>
+        )}
+      </Card>
 
       <Card title="Catálogo">
         <div className="mb-2 flex gap-2">

@@ -1,29 +1,38 @@
 import { ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAreas } from '@/hooks/useAreas'
+import { useRole } from '@/hooks/useRole'
+import type { Role } from '@/domain/types'
+import { hasRequiredAreas } from '@/auth/permissions'
 import Button from '@/ui/Button'
 
 export default function RequireArea({
   area,
   mode = 'any',
+  bypassRoles = ['OWNER'],
   children,
 }: {
   area: string | string[]
   mode?: 'any' | 'all'  // 'any' = precisa de pelo menos 1; 'all' = precisa de todas
+  bypassRoles?: Role | Role[]
   children: ReactNode
 }) {
-  const { has, loading } = useAreas()
+  const { areas, loading } = useAreas()
+  const { role, loading: roleLoading } = useRole()
   const navigate = useNavigate()
   const loc = useLocation()
 
-  if (loading) {
+  if (loading || roleLoading) {
     return <div className="p-6 text-sm">Carregando permissões…</div>
   }
 
+  const bypass = Array.isArray(bypassRoles) ? bypassRoles : [bypassRoles]
+  if (bypass.includes(role)) {
+    return <>{children}</>
+  }
+
   const required = Array.isArray(area) ? area : [area]
-  const ok = mode === 'all'
-    ? required.every(a => has(a))
-    : required.some(a => has(a))
+  const ok = hasRequiredAreas(areas, required, mode)
 
   if (!ok) {
     const next = encodeURIComponent(loc.pathname + loc.search)

@@ -1,18 +1,56 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabaseClient'
+import { useRole } from '@/hooks/useRole'
 import Button from '@/ui/Button'
 import Card from '@/ui/Card'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const { admin } = useRole()
+
+  const nextPath = useMemo(() => {
+    const raw = searchParams.get('next')
+    if (!raw) return null
+    try {
+      const decoded = decodeURIComponent(raw)
+      if (decoded.startsWith('/')) return decoded
+    } catch {}
+    return null
+  }, [searchParams])
+
+  const afterLogin = nextPath || '/gate'
+
+  async function ensureProfile() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('company_id, role, nome, email')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email ?? existing?.email ?? null,
+          role: (existing?.role as any) ?? 'VENDEDOR',
+          nome: existing?.nome ?? null,
+          company_id: existing?.company_id ?? null,
+        }, { onConflict: 'id' })
+    } catch {
+      // Falha silenciosa: não bloqueia o login
+    }
+  }
 
   async function onLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -20,28 +58,26 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-  navigate('/sell') // após login, vai direto para a página de vendas
+      await ensureProfile()
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('company_id, role')
+        .eq('id', user?.id || '')
+        .maybeSingle()
+      if (!prof?.company_id) {
+        const role = (prof?.role as string) || 'VENDEDOR'
+        if (['OWNER', 'ADMIN', 'GERENTE'].includes(role)) {
+          setMsg('Defina uma empresa para começar.')
+          navigate('/adm/companies')
+          return
+        }
+        setMsg('Acesso pendente. Solicite ao administrador para vincular sua empresa.')
+        return
+      }
+      navigate(afterLogin)
     } catch (e: any) {
       setErr(e?.message || 'Falha ao entrar.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function onSignup(e: React.FormEvent) {
-    e.preventDefault()
-    setErr(null); setMsg(null); setLoading(true)
-    try {
-      const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) throw error
-      if (!data.session) {
-        setMsg('Conta criada! Verifique seu e-mail para confirmar e depois faça login.')
-      } else {
-        // caso o projeto não exija confirmação por e-mail
-  navigate('/sell')
-      }
-    } catch (e: any) {
-      setErr(e?.message || 'Falha ao criar a conta.')
     } finally {
       setLoading(false)
     }
@@ -65,28 +101,14 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-b from-white to-zinc-50 flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-4">
         <div className="text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight">Entrar</h1>
-          <p className="text-zinc-500 text-sm mt-1">Acesse o PDV e a Retaguarda</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Tottys</h1>
+          <p className="text-zinc-500 text-sm mt-1">Acesso rápido ao PDV e Retaguarda</p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-2">
-          {/* abas Entrar / Criar conta */}
-          <div className="flex gap-1 p-1">
-            <button
-              className={`flex-1 px-3 py-2 rounded-xl ${mode === 'login' ? 'bg-zinc-900 text-white' : 'bg-zinc-100'}`}
-              onClick={() => setMode('login')}
-            >
-              Entrar
-            </button>
-            <button
-              className={`flex-1 px-3 py-2 rounded-xl ${mode === 'signup' ? 'bg-zinc-900 text-white' : 'bg-zinc-100'}`}
-              onClick={() => setMode('signup')}
-            >
-              Criar conta
-            </button>
-          </div>
+        <div className="rounded-2xl border bg-white p-4 space-y-3">
+          <div className="text-lg font-semibold">Entrar</div>
 
-          <form onSubmit={mode === 'login' ? onLogin : onSignup} className="p-3 space-y-2">
+          <form onSubmit={onLogin} className="space-y-2">
             <input
               type="email"
               value={email}
@@ -102,7 +124,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               className="w-full rounded-2xl border px-3 py-2"
               placeholder="Senha"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              autoComplete="current-password"
               required
             />
 
@@ -110,35 +132,32 @@ export default function Login() {
             {msg && <div className="rounded-2xl border p-2 text-sm bg-emerald-50 text-emerald-900">{msg}</div>}
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Aguarde...' : (mode === 'login' ? 'Entrar' : 'Criar conta')}
+              {loading ? 'Aguarde...' : 'Entrar'}
             </Button>
 
-            {mode === 'login' && (
-              <button
-                type="button"
-                onClick={sendReset}
-                className="text-sm text-zinc-600 mt-1 underline"
-              >
-                Esqueci minha senha
-              </button>
-            )}
-          </form>
-
-          {/* Botão discreto para área administrativa */}
-          <div className="flex justify-center mt-2">
             <button
               type="button"
-              onClick={() => navigate('/adm')}
-              className="text-xs text-zinc-500 px-3 py-1 rounded hover:bg-zinc-100 border border-transparent"
-              style={{ opacity: 0.7 }}
+              onClick={sendReset}
+              className="text-sm text-zinc-600 mt-1 underline"
             >
-              ENTRE COMO ADMIN
+              Esqueci minha senha
             </button>
-          </div>
+          </form>
+
+          {admin && (
+            <div className="flex justify-center pt-1">
+              <button
+                type="button"
+                onClick={() => navigate('/adm')}
+                className="text-xs text-zinc-500 px-3 py-1 rounded hover:bg-zinc-100 border border-transparent"
+              >
+                Acesso administrativo
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Dica simples, sem status de sessão */}
-  <Card title="">
+        <Card title="">
           <div className="text-[11px] text-zinc-400 text-center">
             Após entrar, você será levado à tela com as opções <b>LOJA</b> e <b>ADM</b>.
           </div>

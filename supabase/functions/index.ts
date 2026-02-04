@@ -22,7 +22,7 @@ app.post('/admin_create_user', async (req, res) => {
   const admin = createClient(supabaseUrl, serviceKey)
 
   try {
-    const { email, password, name, role = 'VENDEDOR', areas = [], sendInvite = true } = req.body
+    const { email, password, name, role = 'VENDEDOR', areas = [], sendInvite = true, company_id: bodyCompanyId } = req.body
     if (!email) return res.status(400).json({ error: 'email obrigatório' })
 
     // Quem está chamando?
@@ -36,10 +36,15 @@ app.post('/admin_create_user', async (req, res) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    const company_id = caller?.company_id
+    let company_id = caller?.company_id
     const callerRole = caller?.role
     if (!company_id) return res.status(400).json({ error: 'perfil sem company_id' })
-    if (callerRole !== 'OWNER') return res.status(403).json({ error: 'apenas OWNER pode criar usuários' })
+    if (callerRole !== 'OWNER' && callerRole !== 'ADMIN' && callerRole !== 'GERENTE') {
+      return res.status(403).json({ error: 'sem permissão para criar usuários' })
+    }
+    if (callerRole === 'OWNER' && bodyCompanyId) {
+      company_id = bodyCompanyId
+    }
 
     // Criar usuário na Auth
     let created

@@ -1,6 +1,6 @@
 // src/pages/Sell.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { useApp } from '@/state/store';
 import Button from '@/ui/Button';
@@ -8,10 +8,12 @@ import Card from '@/ui/Card';
 import KPI from '@/ui/KPI';
 import TabBar from '@/ui/TabBar';
 import PayModal from '@/components/PayModal';
+import Toast, { type ToastItem } from '@/ui/Toast';
 import { usePaymentRules } from '@/hooks/usePayment';
 import { savePayment } from '@/domain/services/PaymentService';
 import { createSaleWithItems } from '@/domain/services/SaleService';
 import { formatBRL } from '@/lib/currency';
+import { logActivity } from '@/lib/activity';
 
 type Product = { id: string; sku: string; nome: string; barcode?: string | null; preco: number };
 
@@ -67,8 +69,14 @@ async function getStoreStock(productId: string, storeId?: string | null): Promis
 
 /* ===================== Página ===================== */
 export default function Sell() {
+  const navigate = useNavigate();
   const app = useApp() as any;
   const store = app?.store || null;
+  const company = app?.company || null;
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  function pushToast(kind: ToastItem['kind'], message: string) {
+    setToasts(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, kind, message }])
+  }
 
   /* -------- Dropdown minimalista de lojas (AGORA DENTRO DO COMPONENTE) -------- */
   const [showDropdown, setShowDropdown] = useState(false);
@@ -77,14 +85,33 @@ export default function Sell() {
     if (!showDropdown) return;
     let active = true;
     (async () => {
-      const { data, error } = await supabase
+      if (!company?.id) {
+        if (active) setStoreList([]);
+        return;
+      }
+      let query = supabase
         .from('stores')
         .select('id, nome')
+        .eq('company_id', company.id)
         .order('nome', { ascending: true });
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: us } = await supabase
+            .from('user_stores')
+            .select('store_id')
+            .eq('user_id', user.id);
+          const ids = (us || []).map((r: any) => r.store_id);
+          if (ids.length > 0) query = query.in('id', ids);
+        }
+      } catch {
+        // ignora se user_stores não existir
+      }
+      const { data, error } = await query;
       if (!error && data && active) setStoreList(data);
     })();
     return () => { active = false; };
-  }, [showDropdown]);
+  }, [showDropdown, company?.id]);
 
   /* -------- Banner do CAIXA (status) -------- */
   const [caixaAberto, setCaixaAberto] = useState(false);
@@ -115,10 +142,12 @@ export default function Sell() {
   const [salesHistory, setSalesHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [showReceipt, setShowReceipt] = useState<any | null>(null);
+  const [receiptPayments, setReceiptPayments] = useState<any[]>([]);
 
   const [vendasHoje, setVendasHoje] = useState(0);
   const [ticketMedio, setTicketMedio] = useState(0);
   const [itensVendidos, setItensVendidos] = useState(0);
+  const [insights, setInsights] = useState<string[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -170,8 +199,59 @@ export default function Sell() {
     load();
   }, [store?.id]);
 
+  useEffect(() => {
+    const hints: string[] = [];
+    if (cart.length >= 5) {
+      hints.push('Carrinho com muitos itens: confirme se as quantidades estão corretas.')
+    }
+    if (total > 1000) {
+      hints.push('Venda alta: confirme o pagamento e a forma escolhida.')
+    }
+    const noStock = cart.some(i => i.origin === 'CATALOGO' && i.qtde > 0 && i.preco <= 0);
+    if (noStock) {
+      hints.push('Há itens com preço zerado. Revise antes de finalizar.')
+    }
+    const onlyOneItem = cart.length === 1 && cart[0].qtde === 1;
+    if (onlyOneItem && total < 10) {
+      hints.push('Venda de baixo valor: ofereça um item complementar.')
+    }
+    setInsights(hints);
+  }, [cart, total]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!showReceipt?.id) { setReceiptPayments([]); return; }
+      try {
+        const { data } = await supabase
+          .from('payments')
+          .select('meio, valor, bandeira, nsu')
+          .eq('sale_id', showReceipt.id);
+        if (mounted) setReceiptPayments(data || []);
+      } catch {
+        if (mounted) setReceiptPayments([]);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [showReceipt?.id]);
+
   /* -------- Pagamento -------- */
   const [showPay, setShowPay] = useState(false);
+  const [payKey, setPayKey] = useState(0);
+  const [pendingPays, setPendingPays] = useState<Array<{
+    meio: 'DINHEIRO' | 'PIX' | 'CARTAO'
+    brand?: string | null
+    mode?: 'DEBITO' | 'CREDITO' | 'CREDITO_PARC' | 'CREDITO_VISTA'
+    installments?: number | null
+    installment_value?: number | null
+    mdr_pct?: number | null
+    fee_fixed?: number | null
+    fee_total?: number | null
+    interest_pct_monthly?: number | null
+    interest_total?: number | null
+    gross?: number | null
+    net?: number | null
+  }>>([]);
   const { rules, loading: loadingRules, error: rulesError } =
     usePaymentRules(undefined, store?.company_id ?? undefined);
 
@@ -259,16 +339,16 @@ export default function Sell() {
       const nextQty = copy[idx].qtde + 1;
       if (store?.id) {
         const estoque = await getStoreStock(p.id, store.id);
-        if (nextQty > estoque) { alert('Estoque insuficiente nesta loja.'); return; }
+        if (nextQty > estoque) { pushToast('error', 'Estoque insuficiente nesta loja.'); return; }
       }
-      if (nextQty > 99) { alert('Quantidade máxima por item atingida.'); return; }
+      if (nextQty > 99) { pushToast('error', 'Quantidade máxima por item atingida.'); return; }
       copy[idx] = { ...copy[idx], qtde: nextQty };
       setCart(copy);
       return;
     }
     if (store?.id) {
       const estoque = await getStoreStock(p.id, store.id);
-      if (estoque < 1) { alert('Produto sem estoque disponível nesta loja.'); return; }
+      if (estoque < 1) { pushToast('error', 'Produto sem estoque disponível nesta loja.'); return; }
     }
     setCart(prev => [...prev, {
       product_id: p.id,
@@ -295,7 +375,7 @@ export default function Sell() {
   const clearCart = () => setCart([]);
 
   /* -------- FINALIZAR -------- */
-  async function finalizePayment(pay: {
+  async function finalizePayment(pays: Array<{
     meio: 'DINHEIRO' | 'PIX' | 'CARTAO'
     brand?: string | null
     mode?: 'DEBITO' | 'CREDITO' | 'CREDITO_PARC' | 'CREDITO_VISTA'
@@ -308,17 +388,18 @@ export default function Sell() {
     interest_total?: number | null
     gross?: number | null
     net?: number | null
-  }) {
+  }>) {
     try {
-      if (!store?.id) { alert('Selecione a LOJA para validar estoque e finalizar.'); return; }
-      if (cart.length === 0) { alert('Carrinho vazio.'); return; }
+      if (!store?.id) { pushToast('error', 'Selecione a LOJA para validar estoque e finalizar.'); return; }
+      if (!caixaAberto) { pushToast('error', 'Abra o caixa antes de vender.'); return; }
+      if (cart.length === 0) { pushToast('error', 'Carrinho vazio.'); return; }
       for (const item of cart) {
-        if (item.qtde < 1) { alert(`Quantidade inválida: ${item.nome}.`); return; }
+        if (item.qtde < 1) { pushToast('error', `Quantidade inválida: ${item.nome}.`); return; }
         if (item.origin === 'CATALOGO') {
           const estoque = await getStoreStock(item.product_id as string, store.id);
-          if (item.qtde > estoque) { alert(`Estoque insuficiente: ${item.nome}.`); return; }
+          if (item.qtde > estoque) { pushToast('error', `Estoque insuficiente: ${item.nome}.`); return; }
         }
-        if (item.qtde > 99) { alert(`Máximo 99 por item: ${item.nome}.`); return; }
+        if (item.qtde > 99) { pushToast('error', `Máximo 99 por item: ${item.nome}.`); return; }
       }
 
       // 1) Cria venda + itens
@@ -338,37 +419,53 @@ export default function Sell() {
 
       // 2) Pagamento + baixa estoque
       if (persisted) {
-        await savePayment({
-          sale_id: saleId,
-          meio: pay.meio,
-          brand: pay.brand,
-          mode: pay.mode === 'CREDITO' ? 'CREDITO_VISTA' : pay.mode,
-          installments: pay.installments,
-          installment_value: pay.installment_value,
-          mdr_pct: pay.mdr_pct,
-          fee_fixed: pay.fee_fixed,
-          fee_total: pay.fee_total,
-          interest_pct_monthly: pay.interest_pct_monthly,
-          interest_total: pay.interest_total,
-          gross: pay.gross ?? total,
-          net: pay.net ?? total,
-          acquirer: pay.meio === 'CARTAO' ? 'STONE' : null,
-        });
+        for (const pay of pays) {
+          await savePayment({
+            sale_id: saleId,
+            meio: pay.meio,
+            brand: pay.brand,
+            mode: pay.mode === 'CREDITO' ? 'CREDITO_VISTA' : pay.mode,
+            installments: pay.installments,
+            installment_value: pay.installment_value,
+            mdr_pct: pay.mdr_pct,
+            fee_fixed: pay.fee_fixed,
+            fee_total: pay.fee_total,
+            interest_pct_monthly: pay.interest_pct_monthly,
+            interest_total: pay.interest_total,
+            gross: pay.gross ?? total,
+            net: pay.net ?? total,
+            acquirer: pay.meio === 'CARTAO' ? 'STONE' : null,
+          });
+        }
         const { error: eStock } = await supabase.rpc('post_sale_stock', { p_sale_id: saleId });
         if (eStock) throw eStock;
-        alert('Venda registrada e estoque baixado.');
+        pushToast('success', 'Venda registrada e estoque baixado.');
+        logActivity(`Venda registrada • ${formatBRL(total)} • ${cart.length} itens${store?.nome ? ` • ${store.nome}` : ''}`, 'success')
       } else {
-        alert('Venda registrada localmente (teste). Estoque não baixado.');
+        pushToast('info', 'Venda registrada localmente (teste). Estoque não baixado.');
+        logActivity(`Venda registrada (demo) • ${formatBRL(total)} • ${cart.length} itens${store?.nome ? ` • ${store.nome}` : ''}`, 'info')
       }
       clearCart();
+      setPendingPays([]);
     } catch (e: any) {
-      alert(e?.message || 'Falha ao finalizar a venda.');
+      pushToast('error', e?.message || 'Falha ao finalizar a venda.');
     }
   }
 
   /* ---------------- UI ---------------- */
   return (
     <div className="pb-24 max-w-md mx-auto">
+      <Toast toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
+      {!company?.id && (
+        <div className="p-4">
+          <div className="rounded-2xl border bg-amber-50 text-amber-900 p-3 text-sm">
+            Selecione uma empresa para continuar no PDV.
+            <div className="mt-2">
+              <Button onClick={() => navigate('/company')}>Selecionar Empresa</Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ======= 1) Marca + Selecionar Loja ======= */}
       <header className="p-4 pb-2">
         <div className="flex items-center justify-between relative">
@@ -549,9 +646,23 @@ export default function Sell() {
           <div className="text-zinc-600">Total</div>
           <div className="text-lg font-semibold">{formatBRL(total)}</div>
         </div>
+        {insights.length > 0 && (
+          <Card title="Sugestões">
+            <div className="space-y-1 text-sm text-zinc-700">
+              {insights.map((i, idx) => (
+                <div key={idx}>• {i}</div>
+              ))}
+            </div>
+          </Card>
+        )}
         <div className="grid grid-cols-1 gap-2">
           <Button
-            onClick={() => setShowPay(true)}
+            onClick={() => {
+              if (!caixaAberto) { pushToast('error', 'Abra o caixa antes de vender.'); return; }
+              setPendingPays([])
+              setPayKey(k => k + 1)
+              setShowPay(true)
+            }}
             disabled={cart.length === 0 || loadingRules || !store?.id}
             title={!store?.id ? 'Selecione a loja para pagar' : undefined}
           >
@@ -619,6 +730,16 @@ export default function Sell() {
               <div><b>Data:</b> {new Date(showReceipt.created_at).toLocaleString('pt-BR')}</div>
               <div><b>Total:</b> {formatBRL(showReceipt.total || 0)}</div>
               <div><b>Status:</b> {showReceipt.status}</div>
+              {receiptPayments.length > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs text-zinc-500 mb-1">Pagamentos</div>
+                  {receiptPayments.map((p, idx) => (
+                    <div key={idx} className="text-sm">
+                      {p.meio} {p.bandeira ? `· ${p.bandeira}` : ''} — {formatBRL(p.valor || 0)}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button className="bg-zinc-800" onClick={() => window.print()}>Imprimir</Button>
@@ -631,10 +752,21 @@ export default function Sell() {
       {/* Modal de Pagamento */}
       {showPay && (
         <PayModal
-          total={total}
+          key={payKey}
+          total={Math.max(0, total - pendingPays.reduce((a, p) => a + Number(p.gross ?? p.net ?? 0), 0))}
           rules={rules}
           onClose={() => setShowPay(false)}
-          onConfirm={async (pay) => { setShowPay(false); await finalizePayment(pay); }}
+          onConfirm={async (pay) => {
+            const next = [...pendingPays, pay]
+            setPendingPays(next)
+            const remaining = total - next.reduce((a, p) => a + Number(p.gross ?? p.net ?? 0), 0)
+            if (remaining > 0.009) {
+              setPayKey(k => k + 1)
+              return
+            }
+            setShowPay(false)
+            await finalizePayment(next)
+          }}
         />
       )}
 
@@ -667,7 +799,7 @@ function ScannerModal({ onClose, onCode }: { onClose: () => void; onCode: (code:
       try {
         if (!window.BarcodeDetector) {
           setStarting(false);
-          alert('Este navegador não suporta leitura nativa de código de barras. Use a busca manual.');
+          pushToast('info', 'Este navegador não suporta leitura nativa de código de barras. Use a busca manual.');
           return;
         }
         detector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'upc_a'] });
@@ -682,7 +814,7 @@ function ScannerModal({ onClose, onCode }: { onClose: () => void; onCode: (code:
         tick();
       } catch {
         setStarting(false);
-        alert('Não foi possível acessar a câmera.');
+        pushToast('error', 'Não foi possível acessar a câmera.');
       }
     }
 

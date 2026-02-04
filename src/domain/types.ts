@@ -1,7 +1,14 @@
 
 export type UUID = string
 
-export type Role = 'ADMIN' | 'GERENTE' | 'CAIXA'
+export type Role =
+  | 'OWNER'
+  | 'ADMIN'
+  | 'GERENTE'
+  | 'GESTOR'
+  | 'VENDEDOR'
+  | 'CAIXA'
+  | 'ANON'
 
 export interface Company {
   id: UUID

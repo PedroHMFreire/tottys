@@ -4,21 +4,36 @@ import Button from '@/ui/Button'
 import Card from '@/ui/Card'
 import ImportBatchModal from '@/components/products/ImportBatchModal'
 import NewProductModal from '@/components/products/NewProductModal'
+import { useApp } from '@/state/store'
 
 export default function StockAdmin() {
   const [showImport, setShowImport] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [companyId, setCompanyId] = useState<string | null>(null)
+  const { company, setCompany } = useApp()
   useEffect(() => {
     // Busca o companyId do usuário logado
     (async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: prof } = await supabase.from('profiles').select('company_id').eq('id', user.id).maybeSingle()
-        setCompanyId(prof?.company_id ?? null)
+        const cid = company?.id ?? prof?.company_id ?? null
+        setCompanyId(cid)
+        if (!company && prof?.company_id) {
+          const { data: compRow } = await supabase
+            .from('companies')
+            .select('id, nome')
+            .eq('id', prof.company_id)
+            .maybeSingle()
+          if (compRow) setCompany(compRow as any)
+        }
       }
     })()
-  }, [])
+  }, [company, setCompany])
+
+  useEffect(() => {
+    if (company?.id) setCompanyId(company.id)
+  }, [company?.id])
 
   return (
     <div className="pb-24 max-w-md mx-auto p-4 space-y-4">

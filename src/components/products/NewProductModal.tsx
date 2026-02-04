@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Button from '@/ui/Button'
 import Card from '@/ui/Card'
 import { supabase } from '@/lib/supabaseClient'
+import { validateProductInput } from '@/domain/products/validation'
 
 type ProductData = {
   sku?: string;
@@ -25,13 +26,6 @@ type Props = {
   product?: ProductData;
 }
 
-function parsePtBr(n: string) {
-  if (!n) return null
-  const s = n.replace(/\./g, '').replace(',', '.')
-  const v = Number(s)
-  return Number.isFinite(v) ? v : null
-}
-
 export default function NewProductModal({ companyId, onClose, product }: Props) {
   const [sku, setSku] = useState(product?.sku || '')
   const [nome, setNome] = useState(product?.nome || '')
@@ -53,11 +47,8 @@ export default function NewProductModal({ companyId, onClose, product }: Props) 
   async function save() {
     setError(null)
 
-    if (!sku.trim()) { setError('Informe o SKU.'); return }
-    if (!nome.trim()) { setError('Informe o nome.'); return }
-    const precoNum = parsePtBr(preco)
-    if (!precoNum || precoNum <= 0) { setError('Informe um preço de venda válido (> 0).'); return }
-    if (!ncm.trim()) { setError('Informe o NCM.'); return }
+    const validation = validateProductInput({ sku, nome, preco, custo, ncm })
+    if (!validation.ok) { setError(validation.error); return }
 
     setLoading(true)
     try {
@@ -68,8 +59,8 @@ export default function NewProductModal({ companyId, onClose, product }: Props) 
           sku: sku.trim(),
           nome: nome.trim(),
           barcode: barcode.trim() || null,
-          preco: precoNum,
-          custo: parsePtBr(custo),
+          preco: validation.preco,
+          custo: validation.custo,
           ncm: ncm.trim(),
           cfop: cfop.trim() || null,
           cest: cest.trim() || null,
@@ -78,7 +69,7 @@ export default function NewProductModal({ companyId, onClose, product }: Props) 
           grupo_trib: grupo.trim() || null,
           marca: marca.trim() || null,
           categoria: categoria.trim() || null,
-          active: true,
+          ativo: true,
           last_seen_at: new Date().toISOString()
         }, { onConflict: 'company_id,sku' })
 

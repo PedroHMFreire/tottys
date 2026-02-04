@@ -6,6 +6,7 @@ import KPI from '@/ui/KPI'
 import Card from '@/ui/Card'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { readActivity } from '@/lib/activity'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -45,6 +46,37 @@ export default function Home() {
   const vendasHoje = 0      // TODO: puxar do Supabase
   const ticketMedio = 0     // TODO: calcular (vendasHoje/qtde de cupons)
   const itensVendidos = 0   // TODO: somatório de itens do dia
+
+  const suggestions = useMemo(() => {
+    if (!store) {
+      return [
+        'Selecione uma loja para habilitar o PDV.',
+        'Cadastre produtos para liberar a venda rápida.',
+      ]
+    }
+    if (!caixaAberto) {
+      return [
+        'Abra o caixa para iniciar vendas.',
+        'Revise o estoque dos itens mais vendidos.',
+      ]
+    }
+    return [
+      'Faça uma venda teste para validar pagamentos.',
+      'Acompanhe o ticket médio em Relatórios.',
+    ]
+  }, [store, caixaAberto])
+
+  const [activities, setActivities] = useState(() => readActivity(5))
+  useEffect(() => {
+    const refresh = () => setActivities(readActivity(5))
+    refresh()
+    window.addEventListener('focus', refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
 
   return (
     <div className="pb-24 max-w-md mx-auto">
@@ -101,14 +133,33 @@ export default function Home() {
         <Link to="/settings"><Button className="h-14 text-base">Configurações</Button></Link>
       </section>
 
+      <section className="px-4">
+        <Card title="Sugestões do dia">
+          <ul className="text-sm text-zinc-600 space-y-1">
+            {suggestions.map(item => (
+              <li key={item}>• {item}</li>
+            ))}
+          </ul>
+        </Card>
+      </section>
+
       {/* Últimas ações (placeholder simpático) */}
       <section className="px-4">
         <Card title="Atividades recentes">
-          <ul className="text-sm text-zinc-600 space-y-1">
-            <li>• Sistema iniciado — pronto para vender</li>
-            <li>• Produtos mock carregados (TT-PRE, BP-AZ)</li>
-            <li>• Integração fiscal em modo teste (mock)</li>
-          </ul>
+          {activities.length === 0 ? (
+            <div className="text-sm text-zinc-500">Nenhuma atividade registrada ainda.</div>
+          ) : (
+            <ul className="text-sm text-zinc-600 space-y-1">
+              {activities.map(item => (
+                <li key={item.id}>
+                  • {item.message}{' '}
+                  <span className="text-[11px] text-zinc-400">
+                    {new Date(item.ts).toLocaleString('pt-BR')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       </section>
 

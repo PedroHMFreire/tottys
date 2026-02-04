@@ -1,8 +1,10 @@
 /// <reference types="vite/client" />
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabaseClient'
 import Card from '@/ui/Card'
 import Button from '@/ui/Button'
+import { useApp } from '@/state/store'
 
 // Remove custom ImportMeta interface, Vite provides env typing automatically
 
@@ -24,12 +26,16 @@ const ALL_AREAS = [
 type AreaCode = typeof ALL_AREAS[number]
 
 export default function AdminUsers() {
+  const navigate = useNavigate()
+  const { company, setCompany } = useApp()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [list, setList] = useState<Profile[]>([])
   const [userAreas, setUserAreas] = useState<UA[]>([])
+  const [stores, setStores] = useState<Array<{ id: string; nome: string }>>([])
+  const [userStores, setUserStores] = useState<Array<{ user_id: string; store_id: string }>>([])
 
   // Modal: novo usuário
   const [showNew, setShowNew] = useState(false)
@@ -49,6 +55,15 @@ export default function AdminUsers() {
     return map
   }, [userAreas])
 
+  const storesByUser = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const us of userStores) {
+      if (!map.has(us.user_id)) map.set(us.user_id, new Set())
+      map.get(us.user_id)!.add(us.store_id)
+    }
+    return map
+  }, [userStores])
+
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -59,7 +74,15 @@ export default function AdminUsers() {
         let comp: string | null = null
         if (user) {
           const { data: prof } = await supabase.from('profiles').select('company_id').eq('id', user.id).maybeSingle()
-          comp = prof?.company_id ?? null
+          comp = company?.id ?? prof?.company_id ?? null
+          if (!company && prof?.company_id) {
+            const { data: compRow } = await supabase
+              .from('companies')
+              .select('id, nome')
+              .eq('id', prof.company_id)
+              .maybeSingle()
+            if (compRow) setCompany(compRow as any)
+          }
         }
         if (!comp) throw new Error('Defina a empresa (company_id) no seu perfil.')
         if (!mounted) return
@@ -75,6 +98,14 @@ export default function AdminUsers() {
         if (!mounted) return
         setList((profs || []) as Profile[])
 
+        // lojas da empresa
+        const { data: st, error: e3 } = await supabase
+          .from('stores')
+          .select('id, nome')
+          .eq('company_id', comp)
+          .order('nome', { ascending: true })
+        if (!e3 && mounted) setStores((st || []) as any[])
+
         // exceções por área (todos os usuários da empresa)
         const { data: uareas, error: e2 } = await supabase
           .from('user_areas')
@@ -83,6 +114,17 @@ export default function AdminUsers() {
         if (e2) throw e2
         if (!mounted) return
         setUserAreas((uareas || []) as UA[])
+
+        // vínculos usuário->loja (se tabela existir)
+        try {
+          const { data: us } = await supabase
+            .from('user_stores')
+            .select('user_id, store_id')
+            .eq('company_id', comp)
+          if (mounted) setUserStores((us || []) as any[])
+        } catch {
+          if (mounted) setUserStores([])
+        }
       } catch (e: any) {
         if (mounted) setError(e?.message || 'Falha ao carregar usuários.')
       } finally {
@@ -90,7 +132,11 @@ export default function AdminUsers() {
       }
     })()
     return () => { mounted = false }
-  }, [])
+  }, [company, setCompany])
+
+  useEffect(() => {
+    if (company?.id) setCompanyId(company.id)
+  }, [company?.id])
 
   async function saveRole(userId: string, role: Profile['role']) {
     if (!companyId || !role) return
@@ -124,8 +170,34 @@ export default function AdminUsers() {
     }
   }
 
+  async function toggleStore(userId: string, storeId: string, checked: boolean) {
+    if (!companyId) return
+    setMsg(null); setError(null)
+    try {
+      if (checked) {
+        const { error } = await supabase
+          .from('user_stores')
+          .insert({ user_id: userId, store_id: storeId, company_id: companyId })
+        if (error) throw error
+        setUserStores(prev => [...prev, { user_id: userId, store_id: storeId }])
+      } else {
+        const { error } = await supabase
+          .from('user_stores')
+          .delete()
+          .eq('user_id', userId)
+          .eq('store_id', storeId)
+        if (error) throw error
+        setUserStores(prev => prev.filter(s => !(s.user_id === userId && s.store_id === storeId)))
+      }
+      setMsg('Lojas atualizadas.')
+    } catch (e: any) {
+      setError(e?.message || 'Não foi possível alterar lojas.')
+    }
+  }
+
   async function createUser() {
     if (!nEmail) { setError('Informe o e-mail.'); return }
+    if (!companyId) { setError('Selecione a empresa ativa.'); return }
     setSaving(true); setMsg(null); setError(null)
     try {
       const { data: session } = await supabase.auth.getSession()
@@ -144,6 +216,7 @@ export default function AdminUsers() {
           name: nName || null,
           role: nRole,
           areas: nAreas,
+          company_id: companyId,
           sendInvite: true, // envia convite para o colaborador definir a senha
         }),
       })
@@ -168,6 +241,14 @@ export default function AdminUsers() {
         <h1 className="text-2xl font-bold">Usuários & Acessos</h1>
         <Button onClick={() => setShowNew(true)}>Adicionar usuário</Button>
       </div>
+      <div className="text-xs text-zinc-500">
+        Empresa ativa: {companyId ? companyId.slice(0, 8) + '…' : 'não selecionada'}
+        {!companyId && (
+          <div className="mt-1">
+            <Button className="bg-zinc-800" onClick={() => navigate('/company')}>Selecionar empresa</Button>
+          </div>
+        )}
+      </div>
 
       {error && <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm">{error}</div>}
       {msg && <div className="rounded-2xl border p-3 bg-emerald-50 text-emerald-900 text-sm">{msg}</div>}
@@ -181,6 +262,7 @@ export default function AdminUsers() {
           <div className="space-y-3">
             {list.map(u => {
               const userSet = areasByUser.get(u.id) || new Set<string>()
+              const storeSet = storesByUser.get(u.id) || new Set<string>()
               return (
                 <div key={u.id} className="rounded-2xl border p-3">
                   <div className="flex items-center justify-between gap-2">
@@ -214,6 +296,24 @@ export default function AdminUsers() {
                       </label>
                     ))}
                   </div>
+
+                  {stores.length > 0 && (
+                    <div className="mt-2">
+                      <div className="text-xs text-zinc-500 mb-1">Lojas</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {stores.map(st => (
+                          <label key={st.id} className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={storeSet.has(st.id)}
+                              onChange={e => toggleStore(u.id, st.id, e.target.checked)}
+                            />
+                            {st.nome}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
