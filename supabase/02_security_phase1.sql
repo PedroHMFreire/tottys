@@ -30,6 +30,8 @@ $$;
 create or replace function public.current_role()
 returns text
 language sql stable
+security definer
+set search_path = public
 as $$
   select role from public.profiles where id = auth.uid();
 $$;
@@ -38,6 +40,8 @@ $$;
 create or replace function public.current_company_id()
 returns uuid
 language sql stable
+security definer
+set search_path = public
 as $$
   select company_id from public.profiles where id = auth.uid();
 $$;
@@ -49,6 +53,8 @@ $$;
 create or replace function public.user_has_store_access(p_store_id uuid)
 returns boolean
 language plpgsql stable
+security definer
+set search_path = public
 as $$
 declare
   v_role text;

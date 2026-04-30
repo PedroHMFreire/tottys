@@ -5,6 +5,13 @@ export default {
   theme: {
     extend: {
       borderRadius: { '2xl': '1.25rem' },
+      fontFamily: {
+        rubik:   ['Rubik', 'sans-serif'],
+        nunito:  ['"Nunito Sans"', 'sans-serif'],
+        syne:    ['Syne', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+        mono:    ['"JetBrains Mono"', 'monospace'],
+      },
     },
   },
   plugins: [],

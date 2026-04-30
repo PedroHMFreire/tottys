@@ -14,20 +14,12 @@ export default function RequireCompany({ children }: { children: ReactNode }) {
     ;(async () => {
       if (company?.id) { setLoading(false); return }
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) { if (mounted) setLoading(false); return }
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('id', user.id)
-          .maybeSingle()
-        if (!prof?.company_id) { if (mounted) setLoading(false); return }
-        const { data: comp } = await supabase
-          .from('companies')
-          .select('id, nome')
-          .eq('id', prof.company_id)
-          .maybeSingle()
-        if (comp && mounted) setCompany(comp as any)
+        const { data, error } = await supabase.rpc('get_my_company')
+        if (!error && data && data.length > 0 && mounted) {
+          setCompany(data[0] as any)
+        }
+      } catch {
+        // silently ignore — user will see "select company" prompt
       } finally {
         if (mounted) setLoading(false)
       }

@@ -70,11 +70,8 @@ export function usePaymentRules(storeId?: string, companyId?: string) {
             setState({ rules, loading: false, error: '' })
             return
           }
-        } catch (e: any) {
-          // vai para o fallback
-          if (!aborted) {
-            setState(s => ({ ...s, error: e?.message || 'Não foi possível carregar do banco. Usando padrão.' }))
-          }
+        } catch {
+          // vai para o fallback silenciosamente
         }
       }
 
@@ -83,7 +80,7 @@ export function usePaymentRules(storeId?: string, companyId?: string) {
         setState({
           rules: DEFAULT_RULES,
           loading: false,
-          error: company ? 'Catálogo indisponível. Usando regras padrão.' : '',
+          error: '',
         })
       }
     }

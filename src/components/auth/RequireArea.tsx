@@ -27,7 +27,8 @@ export default function RequireArea({
   }
 
   const bypass = Array.isArray(bypassRoles) ? bypassRoles : [bypassRoles]
-  if (bypass.includes(role)) {
+  // OWNER e ADMIN sempre passam (acesso total)
+  if (bypass.includes(role) || role === 'ADMIN') {
     return <>{children}</>
   }
 
@@ -45,7 +46,7 @@ export default function RequireArea({
           </div>
           <div className="grid grid-cols-2 gap-2 pt-1">
             <Button onClick={() => navigate(`/login?next=${next}`)}>Ir para Login</Button>
-            <Button className="bg-zinc-800" onClick={() => navigate('/')}>Voltar</Button>
+            <Button variant="ghost" onClick={() => navigate('/')}>Voltar</Button>
           </div>
         </div>
       </div>

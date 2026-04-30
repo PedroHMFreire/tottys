@@ -2,5 +2,18 @@ node_modules/
 dist/
 .env
 .env.*
+.env.local
+!.env.example
 .vite/
 *.log
+tsconfig.tsbuildinfo
+
+# Supabase
+supabase/.temp/
+
+# Claude Code memory
+.claude/
+
+# Playwright
+/playwright-report/
+/test-results/

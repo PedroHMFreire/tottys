@@ -12,7 +12,7 @@ export default function NotFound() {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => navigate('/login')}>Ir para Login</Button>
-          <Button className="bg-zinc-800" onClick={() => navigate('/')}>Voltar ao início</Button>
+          <Button variant="ghost" onClick={() => navigate('/')}>Voltar ao início</Button>
         </div>
       </div>
     </div>

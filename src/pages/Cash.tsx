@@ -6,6 +6,7 @@ import Card from '@/ui/Card'
 import { formatBRL } from '@/lib/currency'
 import Toast, { type ToastItem } from '@/ui/Toast'
 import { logActivity } from '@/lib/activity'
+import { isUUID } from '@/lib/utils'
 
 type CashRow = {
   id: string
@@ -26,9 +27,6 @@ type Totals = {
   sangrias: number
 }
 
-function isUUID(id?: string) {
-  return !!id && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(id)
-}
 
 export default function Cash() {
   const { store } = useApp()
@@ -90,6 +88,11 @@ export default function Cash() {
       }
     })()
   }, [store, demoKey])
+
+  // Auto-carrega totais quando o caixa está aberto
+  useEffect(() => {
+    if (cash?.id) loadTotals()
+  }, [cash?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Carrega totais da sessão (Leitura X)
   async function loadTotals() {
@@ -267,9 +270,9 @@ export default function Cash() {
   }
 
   return (
-    <div className="pb-24 max-w-md mx-auto p-4 space-y-4">
+    <div className="pb-24 md:pb-8 max-w-4xl mx-auto p-4 sm:p-6 space-y-4">
       <Toast toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
-      <h1 className="text-2xl font-bold">Caixa</h1>
+      <h1 className="text-lg font-semibold text-[#1E1B4B]">Caixa</h1>
 
       {!store && (
         <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm">
@@ -281,7 +284,7 @@ export default function Cash() {
       {!cash && store && (
         <Card title="Abrir caixa">
           <div className="space-y-3">
-            <div className="text-sm text-zinc-600">
+            <div className="text-sm text-slate-600">
               Informe o valor inicial em <b>dinheiro</b> no gaveteiro.
             </div>
             <div className="flex gap-2">
@@ -291,7 +294,7 @@ export default function Cash() {
                 step="0.01"
                 value={valorInicial}
                 onChange={e => setValorInicial(e.target.value)}
-                className="flex-1 rounded-2xl border px-3 py-2"
+                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
                 placeholder="Valor inicial"
               />
               <Button onClick={abrirCaixa} disabled={loading || !store}>Abrir</Button>
@@ -307,7 +310,7 @@ export default function Cash() {
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <div className="font-semibold">ABERTO</div>
-                <div className="text-zinc-500">
+                <div className="text-slate-400">
                   Desde {new Date(cash.abertura_at).toLocaleString('pt-BR')}
                 </div>
               </div>
@@ -318,30 +321,30 @@ export default function Cash() {
           </Card>
 
           <Card title="Leitura X (parcial)">
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-3">
               <div className="rounded-2xl border bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-zinc-400">Dinheiro</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400">Dinheiro</div>
                 <div className="text-lg font-semibold mt-1">{formatBRL(totals.dinheiro)}</div>
               </div>
               <div className="rounded-2xl border bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-zinc-400">PIX</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400">PIX</div>
                 <div className="text-lg font-semibold mt-1">{formatBRL(totals.pix)}</div>
               </div>
               <div className="rounded-2xl border bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-zinc-400">Cartão</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400">Cartão</div>
                 <div className="text-lg font-semibold mt-1">{formatBRL(totals.cartao)}</div>
               </div>
               <div className="rounded-2xl border bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-zinc-400">Suprimentos</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400">Suprimentos</div>
                 <div className="text-lg font-semibold mt-1">{formatBRL(totals.suprimentos)}</div>
               </div>
               <div className="rounded-2xl border bg-white p-3">
-                <div className="text-[11px] uppercase tracking-wide text-zinc-400">Sangrias</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400">Sangrias</div>
                 <div className="text-lg font-semibold mt-1">{formatBRL(totals.sangrias)}</div>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <div className="text-sm text-zinc-600">Esperado no gaveteiro</div>
+              <div className="text-sm text-slate-600">Esperado no gaveteiro</div>
               <div className="text-base font-semibold">{formatBRL(esperado)}</div>
             </div>
             <div className="mt-3">
@@ -351,7 +354,7 @@ export default function Cash() {
 
           <Card title="Sangria / Suprimento">
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <select value={movTipo} onChange={e => setMovTipo(e.target.value as any)} className="rounded-2xl border px-3 py-2">
+              <select value={movTipo} onChange={e => setMovTipo(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2 bg-white">
                 <option value="SUPRIMENTO">Suprimento</option>
                 <option value="SANGRIA">Sangria</option>
               </select>
@@ -361,14 +364,14 @@ export default function Cash() {
                 step="0.01"
                 value={movValor}
                 onChange={e => setMovValor(e.target.value)}
-                className="rounded-2xl border px-3 py-2"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
                 placeholder="Valor"
               />
             </div>
             <input
               value={movMotivo}
               onChange={e => setMovMotivo(e.target.value)}
-              className="w-full rounded-2xl border px-3 py-2 mb-2"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white mb-2"
               placeholder="Motivo (ex.: troco, segurança, acerto)"
             />
             <Button onClick={registrarMovimento} disabled={loading || Number(movValor) <= 0}>Registrar</Button>
@@ -377,14 +380,14 @@ export default function Cash() {
           <Card title="Fechar caixa">
             <div className="grid grid-cols-2 gap-2 items-end">
               <div>
-                <div className="text-sm text-zinc-600 mb-1">Valor contado (dinheiro)</div>
+                <div className="text-sm text-slate-600 mb-1">Valor contado (dinheiro)</div>
                 <input
                   type="number"
                   min={0}
                   step="0.01"
                   value={valorContado}
                   onChange={e => setValorContado(e.target.value)}
-                  className="w-full rounded-2xl border px-3 py-2"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
                 />
               </div>
               <Button onClick={fecharCaixa} disabled={loading || lockedClose}>Fechar</Button>

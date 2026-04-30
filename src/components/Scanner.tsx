@@ -44,7 +44,7 @@ export default function Scanner({ onDetect }: { onDetect: (code: string) => void
     <div className="space-y-2">
       <video ref={videoRef} autoPlay playsInline className="w-full rounded-2xl bg-black/5 aspect-[3/4]" />
       {!supported && (
-        <div className="text-xs text-zinc-500">
+        <div className="text-xs text-slate-400">
           Seu navegador não suporta leitura automática. Digite o código manualmente.
         </div>
       )}

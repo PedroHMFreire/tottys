@@ -1,6 +1,6 @@
 
 import { create } from 'zustand'
-import type { Product, Sale, SaleItem, Store, User, Customer, Company } from '@/domain/types'
+import type { Product, SaleItem, Store, User, Customer, Company, Role } from '@/domain/types'
 import { nanoid } from '@/ui/nanoid'
 
 export interface AppState {
@@ -10,6 +10,10 @@ export interface AppState {
   cart: SaleItem[]
   products: Product[]
   customers: Customer[]
+  // Cache de permissões — lido uma vez no login, evita queries repetidas nos guards
+  role: Role
+  areas: string[]
+  permissionsLoaded: boolean
   setUser: (u?: User) => void
   setCompany: (c?: Company) => void
   setStore: (s?: Store) => void
@@ -18,6 +22,8 @@ export interface AppState {
   clearCart: () => void
   removeFromCart: (id: string) => void
   setQty: (id: string, qty: number) => void
+  setPermissions: (role: Role, areas: string[]) => void
+  clearPermissions: () => void
 }
 
 const storedCompany = (() => {
@@ -44,6 +50,11 @@ export const useApp = create<AppState>((set, get) => ({
   cart: [],
   products: [],
   customers: [],
+  role: 'ANON',
+  areas: [],
+  permissionsLoaded: false,
+  setPermissions: (role, areas) => set({ role, areas, permissionsLoaded: true }),
+  clearPermissions: () => set({ role: 'ANON', areas: [], permissionsLoaded: false }),
   setUser: (user) => set({ user }),
   setCompany: (company) => {
     if (company) {

@@ -55,8 +55,8 @@ export default function SelectStore() {
   }, [company?.id])
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Selecione a Loja</h2>
+    <div className="p-4 sm:p-8 max-w-2xl mx-auto">
+      <h2 className="text-lg font-semibold text-[#1E1B4B] mb-4">Selecione a Loja</h2>
       {!company?.id && (
         <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm mb-3">
           Selecione uma empresa primeiro.
@@ -67,9 +67,9 @@ export default function SelectStore() {
       )}
       {error && <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm mb-3">{error}</div>}
       {loading ? (
-        <div className="text-sm text-zinc-500">Carregando…</div>
+        <div className="text-sm text-slate-400">Carregando…</div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {stores.map(st => (
             <Button
               key={st.id}
@@ -83,7 +83,7 @@ export default function SelectStore() {
             </Button>
           ))}
           {!stores.length && company?.id && (
-            <div className="text-sm text-zinc-500">Nenhuma loja cadastrada para esta empresa.</div>
+            <div className="text-sm text-slate-400">Nenhuma loja cadastrada para esta empresa.</div>
           )}
         </div>
       )}

@@ -36,9 +36,9 @@ export default function StockAdmin() {
   }, [company?.id])
 
   return (
-    <div className="pb-24 max-w-md mx-auto p-4 space-y-4">
+    <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Estoque (Admin)</h1>
+        <h1 className="text-lg font-semibold text-[#1E1B4B]">Estoque (Admin)</h1>
       </div>
 
       {/* Ações rápidas: agora o ADM > Estoque também importa/cadastra produtos */}
@@ -46,7 +46,7 @@ export default function StockAdmin() {
         <div className="text-sm font-semibold mb-2">Ações rápidas</div>
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => setShowImport(true)}>Importar Produtos</Button>
-          <Button className="bg-zinc-800" onClick={() => setShowNew(true)}>Cadastrar Produto</Button>
+          <Button variant="ghost" onClick={() => setShowNew(true)}>Cadastrar Produto</Button>
         </div>
       </div>
 

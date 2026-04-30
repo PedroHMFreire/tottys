@@ -117,23 +117,23 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
-      <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-4 space-y-4">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center">
+      <div className="w-full sm:max-w-md lg:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl p-4 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="text-lg font-semibold">Pagamento</div>
-          <button onClick={onClose} className="text-zinc-500">fechar</button>
+          <button onClick={onClose} className="text-slate-400">fechar</button>
         </div>
 
         {/* Passo 1 — Meio */}
         <div>
-          <div className="text-xs text-zinc-500 mb-2">1) Escolha o meio</div>
+          <div className="text-xs text-slate-400 mb-2">1) Escolha o meio</div>
           <div className="grid grid-cols-3 gap-2">
             {(['PIX','DINHEIRO','CARTAO'] as const).map(m => (
               <button
                 key={m}
                 onClick={() => setMeio(m)}
-                className={`py-2 rounded-2xl border ${meio===m ? 'border-black font-semibold' : 'border-zinc-300 text-zinc-600'}`}
+                className={`py-2 rounded-2xl border ${meio===m ? 'border-[#1E40AF] font-semibold text-[#1E40AF]' : 'border-zinc-300 text-slate-600'}`}
               >{m}</button>
             ))}
           </div>
@@ -155,12 +155,12 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
 
           {mixed && (
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="text-sm text-zinc-600 self-center">Valor desta cobrança</div>
+              <div className="text-sm text-slate-600 self-center">Valor desta cobrança</div>
               <input
                 type="number" step="0.01" min={0.01} max={total}
                 value={amount}
                 onChange={e => setAmount(Number(e.target.value))}
-                className="rounded-2xl border px-3 py-2"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
               />
             </div>
           )}
@@ -169,7 +169,7 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
         {/* Passo 2 — Detalhes */}
         {meio === 'CARTAO' ? (
           <>
-            <div className="text-xs text-zinc-500">2) Detalhes do cartão</div>
+            <div className="text-xs text-slate-400">2) Detalhes do cartão</div>
 
             {rules.length === 0 ? (
               <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm">
@@ -178,10 +178,10 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-2">
-                  <select value={brand} onChange={e=>setBrand(e.target.value)} className="rounded-2xl border px-3 py-2">
+                  <select value={brand} onChange={e=>setBrand(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 bg-white">
                     {brands.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
-                  <select value={mode} onChange={e=>setMode(e.target.value as any)} className="rounded-2xl border px-3 py-2">
+                  <select value={mode} onChange={e=>setMode(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2 bg-white">
                     {modesForBrand.map(m => <option key={m} value={m}>{m.replace('_',' ')}</option>)}
                   </select>
                 </div>
@@ -195,10 +195,10 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
                         max={rule.max_installments}
                         value={installments}
                         onChange={e=>setInstallments(Number(e.target.value))}
-                        className="rounded-2xl border px-3 py-2"
+                        className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
                         placeholder="Parcelas"
                       />
-                      <select value={whoPaysInterest} onChange={e=>setWhoPaysInterest(e.target.value as any)} className="rounded-2xl border px-3 py-2">
+                      <select value={whoPaysInterest} onChange={e=>setWhoPaysInterest(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2 bg-white">
                         <option value="CLIENT">Juros: Cliente</option>
                         <option value="MERCHANT">Juros: Loja</option>
                       </select>
@@ -210,7 +210,7 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
 
                 {card && (
                   <div className="rounded-2xl border p-3 bg-zinc-50">
-                    {mixed && <div className="text-xs text-zinc-500 mb-1">Baseado em {formatBRL(priceToCharge)} desta cobrança</div>}
+                    {mixed && <div className="text-xs text-slate-400 mb-1">Baseado em {formatBRL(priceToCharge)} desta cobrança</div>}
                     <div className="text-sm">Parcela: <b>{formatBRL(card.installmentValue)}</b> × {card.installments}</div>
                     <div className="text-sm">Total cobrado: <b>{formatBRL(card.gross)}</b></div>
                     <div className="text-sm">Taxas (MDR + fixo): <b>{formatBRL(card.feeTotal)}</b></div>
@@ -225,9 +225,9 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
           </>
         ) : (
           <div className="rounded-2xl border p-3 bg-zinc-50">
-            <div className="text-xs text-zinc-500 mb-1">2) Revisar valor</div>
+            <div className="text-xs text-slate-400 mb-1">2) Revisar valor</div>
             <div className="text-sm">Esta cobrança: <b>{formatBRL(priceToCharge)}</b></div>
-            {!mixed && <div className="text-xs text-zinc-500">Será cobrado o total desta venda.</div>}
+            {!mixed && <div className="text-xs text-slate-400">Será cobrado o total desta venda.</div>}
             {mixed && !isAmountValid() && (
               <div className="text-sm text-red-600 mt-1">Valor inválido (mín. R$ 0,01 e máx. {formatBRL(total)}).</div>
             )}
@@ -236,7 +236,7 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
 
         {/* Passo 3 — Confirmar */}
         <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button className="bg-zinc-800" onClick={onClose}>Cancelar</Button>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <Button
             onClick={handleConfirm}
             disabled={meio==='CARTAO' && (!rule || !!error) || !isAmountValid()}

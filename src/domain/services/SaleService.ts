@@ -1,15 +1,14 @@
 import { supabase } from '@/lib/supabaseClient'
+import { isUUID } from '@/lib/utils'
 
 export type SaleItemInput = {
   product_id?: string | null
+  variant_id?: string | null
   qtde: number
   preco_unit: number
   desconto?: number
 }
 
-function isUUID(id?: string) {
-  return !!id && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(id)
-}
 
 /**
  * Cria a venda em `sales` e os itens em `sale_items`.
@@ -58,6 +57,7 @@ export async function createSaleWithItems(opts: {
       const payload = items.map(it => ({
         sale_id: sale.id,
         product_id: it.product_id ?? null,
+        variant_id: it.variant_id ?? null,
         qtde: it.qtde,
         preco_unit: it.preco_unit,
         desconto: it.desconto ?? 0,

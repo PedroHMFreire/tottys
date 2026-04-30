@@ -26,7 +26,7 @@ serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey)
 
     const body = await req.json()
-    const { email, password, name, role = 'VENDEDOR', areas = [], sendInvite = true, company_id: bodyCompanyId } = body || {}
+    const { email, password, name, role = 'COLABORADOR', cargo = null, areas = [], sendInvite = true, company_id: bodyCompanyId } = body || {}
     if (!email) return new Response(JSON.stringify({ error: 'email obrigatório' }), { status: 400, headers: corsHeaders })
 
     const { data: { user } } = await supa.auth.getUser()
@@ -43,6 +43,12 @@ serve(async (req) => {
     if (!company_id) return new Response(JSON.stringify({ error: 'perfil sem company_id' }), { status: 400, headers: corsHeaders })
     if (!['OWNER', 'ADMIN', 'GERENTE'].includes(callerRole)) {
       return new Response(JSON.stringify({ error: 'sem permissão para criar usuários' }), { status: 403, headers: corsHeaders })
+    }
+
+    // Validar que GERENTE não cria ADMIN ou OWNER
+    const { role: bodyRole = 'COLABORADOR' } = body || {}
+    if (callerRole === 'GERENTE' && !['COLABORADOR'].includes(bodyRole)) {
+      return new Response(JSON.stringify({ error: 'GERENTE só pode criar COLABORADOR' }), { status: 403, headers: corsHeaders })
     }
     if (callerRole === 'OWNER' && bodyCompanyId) {
       company_id = bodyCompanyId
@@ -68,7 +74,7 @@ serve(async (req) => {
     const user_id = created.id
 
     await admin.from('profiles').upsert(
-      { id: user_id, company_id, role, nome: name ?? null, email },
+      { id: user_id, company_id, role, cargo: cargo ?? null, nome: name ?? null, email },
       { onConflict: 'id' },
     )
 

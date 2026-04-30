@@ -24,31 +24,9 @@ export default function SelectCompany() {
     ;(async () => {
       setLoading(true); setError(null)
       try {
-        let companies: Company[] = []
-        if (canSeeAll) {
-          const { data, error } = await supabase.from('companies').select('id, nome').order('nome', { ascending: true })
-          if (error) throw error
-          companies = (data || []) as Company[]
-        } else {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (!user) throw new Error('Você precisa estar logado.')
-          const { data: prof, error } = await supabase
-            .from('profiles')
-            .select('company_id')
-            .eq('id', user.id)
-            .maybeSingle()
-          if (error) throw error
-          if (prof?.company_id) {
-            const { data: comp, error: e2 } = await supabase
-              .from('companies')
-              .select('id, nome')
-              .eq('id', prof.company_id)
-              .maybeSingle()
-            if (e2) throw e2
-            if (comp) companies = [comp as Company]
-          }
-        }
-        if (mounted) setList(companies)
+        const { data, error } = await supabase.rpc('get_my_company')
+        if (error) throw error
+        if (mounted) setList((data || []) as Company[])
       } catch (e: any) {
         if (mounted) setError(e?.message || 'Falha ao carregar empresas.')
       } finally {
@@ -56,7 +34,7 @@ export default function SelectCompany() {
       }
     })()
     return () => { mounted = false }
-  }, [canSeeAll])
+  }, [])
 
   const subtitle = useMemo(() => {
     if (canSeeAll) return 'Escolha a empresa ativa para operar.'
@@ -64,17 +42,17 @@ export default function SelectCompany() {
   }, [canSeeAll])
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-xl font-semibold mb-1">Selecionar Empresa</h2>
-      <div className="text-sm text-zinc-500 mb-4">{subtitle}</div>
+    <div className="p-4 sm:p-8 max-w-2xl mx-auto">
+      <h2 className="text-lg font-semibold text-[#1E1B4B] mb-1">Selecionar Empresa</h2>
+      <div className="text-sm text-slate-400 mb-4">{subtitle}</div>
 
       {error && <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm mb-3">{error}</div>}
       {loading ? (
-        <div className="text-sm text-zinc-500">Carregando…</div>
+        <div className="text-sm text-slate-400">Carregando…</div>
       ) : list.length === 0 ? (
-        <div className="text-sm text-zinc-500">Nenhuma empresa disponível.</div>
+        <div className="text-sm text-slate-400">Nenhuma empresa disponível.</div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {list.map(c => (
             <Button
               key={c.id}

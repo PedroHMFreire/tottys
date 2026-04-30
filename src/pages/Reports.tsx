@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  AreaChart, Area, BarChart, Bar, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
+} from 'recharts'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
 import { useRole } from '@/hooks/useRole'
@@ -7,6 +11,7 @@ import Card from '@/ui/Card'
 import KPI from '@/ui/KPI'
 import { movingAverage, simpleForecast } from '@/domain/reports/predict'
 import { formatBRL } from '@/lib/currency'
+import { RefreshCw, TrendingUp, TrendingDown } from 'lucide-react'
 
 type KpiRow = {
   company_id: string
@@ -111,6 +116,17 @@ function csvDownload(name: string, rows: any[]) {
   URL.revokeObjectURL(url)
 }
 
+const PIE_COLORS: Record<string, string> = {
+  DINHEIRO: '#1E40AF',
+  PIX: '#3B82F6',
+  CARTAO: '#60A5FA',
+}
+const MEIO_LABEL: Record<string, string> = {
+  DINHEIRO: 'Dinheiro',
+  PIX: 'Pix',
+  CARTAO: 'Cartão',
+}
+
 export default function Reports() {
   const { store, company, setCompany } = useApp()
   const { role } = useRole()
@@ -126,11 +142,10 @@ export default function Reports() {
     return map
   }, [companies])
 
-  // filtros
-  const [tab, setTab] = useState<'oper' | 'gestao'>('oper')
+  const [tab, setTab] = useState<'oper' | 'gestao' | 'moda'>('oper')
   const [from, setFrom] = useState<string>(toISODate(startOfToday()))
   const [to, setTo] = useState<string>(toISODate(endOfToday()))
-  const [seller, setSeller] = useState<string>('') // user_id; vazio = todos
+  const [seller, setSeller] = useState<string>('')
   const [comparePrev, setComparePrev] = useState(false)
   const [prevKpis, setPrevKpis] = useState<KpiRow[]>([])
 
@@ -140,7 +155,102 @@ export default function Reports() {
   const [tops, setTops] = useState<TopRow[]>([])
   const [sellers, setSellers] = useState<SellerRow[]>([])
   const [hours, setHours] = useState<HourRow[]>([])
+
+  const isAdmin = role === 'OWNER' || role === 'ADMIN' || role === 'GERENTE'
+  type SaleRow = { id: string; created_at: string; total: number; desconto: number; status: string; customer_nome: string | null; store_nome: string | null; user_nome: string | null; items_count: number }
+  type SaleItem = { id: string; nome: string; qtde: number; preco_unit: number; desconto: number }
+  const [salesHistory, setSalesHistory] = useState<SaleRow[]>([])
+  const [loadingSales, setLoadingSales] = useState(false)
+  const [saleItemsMap, setSaleItemsMap] = useState<Map<string, SaleItem[]>>(new Map())
+  const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null)
+  const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [salesFilter, setSalesFilter] = useState<'all' | 'PAGA' | 'PENDENTE' | 'CANCELADA'>('all')
+
+  async function loadSalesHistory() {
+    const cid = scope === 'global' ? (globalCompanyId || null) : (company?.id || store?.company_id || null)
+    if (!cid) return
+    setLoadingSales(true)
+    try {
+      let q = supabase
+        .from('sales')
+        .select('id, created_at, total, desconto, status, store_id, user_id, customer_id, stores(nome), customers(nome), profiles(nome)')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      const { data: storeRows } = await supabase.from('stores').select('id').eq('company_id', cid)
+      const storeIds = (storeRows || []).map((s: any) => s.id)
+      if (storeIds.length > 0) q = q.in('store_id', storeIds)
+      else { setSalesHistory([]); return }
+      const { data } = await q
+      setSalesHistory(((data || []) as any[]).map(s => ({
+        id: s.id,
+        created_at: s.created_at,
+        total: Number(s.total),
+        desconto: Number(s.desconto || 0),
+        status: s.status,
+        customer_nome: s.customers?.nome || null,
+        store_nome: s.stores?.nome || null,
+        user_nome: s.profiles?.nome || null,
+        items_count: 0,
+      })))
+    } finally {
+      setLoadingSales(false)
+    }
+  }
+
+  async function toggleSaleItems(saleId: string) {
+    if (expandedSaleId === saleId) { setExpandedSaleId(null); return }
+    setExpandedSaleId(saleId)
+    if (saleItemsMap.has(saleId)) return
+    const { data } = await supabase
+      .from('sale_items')
+      .select('id, qtde, preco_unit, desconto, products(nome)')
+      .eq('sale_id', saleId)
+    const items: SaleItem[] = ((data || []) as any[]).map(i => ({
+      id: i.id, nome: i.products?.nome || '—',
+      qtde: Number(i.qtde), preco_unit: Number(i.preco_unit), desconto: Number(i.desconto || 0),
+    }))
+    setSaleItemsMap(prev => new Map(prev).set(saleId, items))
+  }
+
+  async function cancelSale(id: string) {
+    setCancelling(true)
+    try {
+      const { error } = await supabase.from('sales').update({ status: 'CANCELADA' }).eq('id', id)
+      if (error) throw error
+      setSalesHistory(prev => prev.map(s => s.id === id ? { ...s, status: 'CANCELADA' } : s))
+      setCancelConfirmId(null)
+    } catch (e: any) {
+      alert(e?.message || 'Não foi possível cancelar a venda.')
+    } finally {
+      setCancelling(false)
+    }
+  }
   const [closures, setClosures] = useState<CashCloseRow[]>([])
+
+  type RupturaRow = {
+    product_id: string
+    produto_nome: string
+    produto_sku: string
+    variant_id: string
+    tamanho: string
+    cor: string
+    store_id: string
+    qty: number
+  }
+  const [ruptura, setRuptura] = useState<RupturaRow[]>([])
+  const [loadingRuptura, setLoadingRuptura] = useState(false)
+
+  type RankingVarianteRow = { tamanho: string; cor: string; produto_nome: string; produto_sku: string; qtde_total: number; receita: number }
+  type GiroColecaoRow = { collection_id: string | null; colecao_nome: string; num_vendas: number; qtde_total: number; receita: number }
+  type CurvaAbcRow = { product_id: string; nome: string; sku: string; qtde_total: number; receita: number; curva?: 'A' | 'B' | 'C' }
+  type InadimplenciaRow = { customer_id: string; nome: string; contato: string | null; score_interno: string; parcelas_atrasadas: number; total_aberto: number; total_atrasado: number; primeiro_atraso: string | null }
+
+  const [rankingVariante, setRankingVariante] = useState<RankingVarianteRow[]>([])
+  const [giroColecao, setGiroColecao] = useState<GiroColecaoRow[]>([])
+  const [curvaAbc, setCurvaAbc] = useState<CurvaAbcRow[]>([])
+  const [inadimplencia, setInadimplencia] = useState<InadimplenciaRow[]>([])
+  const [loadingFashion, setLoadingFashion] = useState(false)
 
   const canLoad = scope === 'global' ? isOwner : !!company?.id
   const storeFilterId = scope === 'company'
@@ -152,15 +262,10 @@ export default function Reports() {
     let mounted = true
     ;(async () => {
       try {
-        const { data, error } = await supabase
-          .from('companies')
-          .select('id, nome')
-          .order('nome', { ascending: true })
+        const { data, error } = await supabase.from('companies').select('id, nome').order('nome', { ascending: true })
         if (error) throw error
         if (mounted) setCompanies((data || []) as any[])
-      } catch {
-        // ignore
-      }
+      } catch { }
     })()
     return () => { mounted = false }
   }, [isOwner])
@@ -182,16 +287,12 @@ export default function Reports() {
     return () => { mounted = false }
   }, [isOwner, scope, globalCompanyId])
 
-  // opções de vendedor (com base na view)
   const sellerOptions = useMemo(() => {
     const map = new Map<string, string>()
-    sellers.forEach(s => {
-      if (s.user_id) map.set(s.user_id, s.vendedor || '—')
-    })
+    sellers.forEach(s => { if (s.user_id) map.set(s.user_id, s.vendedor || '—') })
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }))
   }, [sellers])
 
-  // acumulados do período (para KPIs)
   const kpiAgg = useMemo(() => {
     const rows = kpis.filter(r => (!storeFilterId || r.store_id === storeFilterId))
     const totalCup = rows.reduce((a, r) => a + Number(r.cupons || 0), 0)
@@ -213,32 +314,22 @@ export default function Reports() {
     return { totalCup, fat, desc, itens, ticket }
   }, [prevKpis, comparePrev, storeFilterId])
 
-  // mix por meio (agregado)
-  type PayAggRow = {
-    meio: string
-    qtd: number
-    gross: number
-    net: number
-    fees: number
-    pct: number
-  }
+  type PayAggRow = { meio: string; qtd: number; gross: number; net: number; fees: number; pct: number }
 
   const payAgg = useMemo(() => {
-  const rows = pays.filter(r => (!storeFilterId || r.store_id === storeFilterId))
-  const totalGross = rows.reduce((a, r) => a + Number(r.total_gross || 0), 0) || 1
+    const rows = pays.filter(r => (!storeFilterId || r.store_id === storeFilterId))
+    const totalGross = rows.reduce((a, r) => a + Number(r.total_gross || 0), 0) || 1
+    return (['DINHEIRO', 'PIX', 'CARTAO'] as const).map(m => {
+      const f = rows.filter(r => r.meio === m)
+      const qtd   = f.reduce((a, r) => a + r.qtd, 0)
+      const gross = f.reduce((a, r) => a + Number(r.total_gross || 0), 0)
+      const net   = f.reduce((a, r) => a + Number(r.total_net || 0), 0)
+      const fees  = f.reduce((a, r) => a + Number(r.total_fees || 0), 0)
+      const pct   = Math.round((gross / totalGross) * 100)
+      return { meio: m, qtd, gross, net, fees, pct } as PayAggRow
+    })
+  }, [pays, storeFilterId])
 
-  return (['DINHEIRO', 'PIX', 'CARTAO'] as const).map(m => {
-    const f = rows.filter(r => r.meio === m)
-    const qtd   = f.reduce((a, r) => a + r.qtd, 0)
-    const gross = f.reduce((a, r) => a + Number(r.total_gross || 0), 0)
-    const net   = f.reduce((a, r) => a + Number(r.total_net || 0), 0)
-    const fees  = f.reduce((a, r) => a + Number(r.total_fees || 0), 0)
-    const pct   = Math.round((gross / totalGross) * 100)
-    return { meio: m, qtd, gross, net, fees, pct }
-  })
-}, [pays, storeFilterId])
-
-  // horas (agregado por hora do dia)
   const hoursAgg = useMemo(() => {
     const rows = hours.filter(r => (!storeFilterId || r.store_id === storeFilterId))
     const map = new Map<number, number>()
@@ -255,7 +346,6 @@ export default function Reports() {
     if (!canLoad) return
     setLoading(true)
     try {
-      // período como timestamps
       const fromTs = new Date(`${from}T00:00:00`)
       const toTs = new Date(`${to}T23:59:59`)
       const days = Math.max(1, Math.ceil((toTs.getTime() - fromTs.getTime()) / (1000 * 60 * 60 * 24)) + 1)
@@ -263,26 +353,14 @@ export default function Reports() {
       const prevFrom = new Date(prevTo.getTime() - (days * 24 * 60 * 60 * 1000))
       const compId = scope === 'global' ? (globalCompanyId || null) : (company?.id || null)
 
-      // KPIs
       {
-        let q = supabase
-          .from('v_report_sales_kpis')
-          .select('*')
-          .gte('dia', fromTs.toISOString())
-          .lte('dia', toTs.toISOString())
-          .order('dia', { ascending: true })
+        let q = supabase.from('v_report_sales_kpis').select('*').gte('dia', fromTs.toISOString()).lte('dia', toTs.toISOString()).order('dia', { ascending: true })
         if (compId) q = q.eq('company_id', compId)
         if (storeFilterId) q = q.eq('store_id', storeFilterId)
         const { data } = await q
         setKpis((data || []) as KpiRow[])
-
         if (comparePrev) {
-          let qPrev = supabase
-            .from('v_report_sales_kpis')
-            .select('*')
-            .gte('dia', prevFrom.toISOString())
-            .lte('dia', prevTo.toISOString())
-            .order('dia', { ascending: true })
+          let qPrev = supabase.from('v_report_sales_kpis').select('*').gte('dia', prevFrom.toISOString()).lte('dia', prevTo.toISOString()).order('dia', { ascending: true })
           if (compId) qPrev = qPrev.eq('company_id', compId)
           if (storeFilterId) qPrev = qPrev.eq('store_id', storeFilterId)
           const { data: prev } = await qPrev
@@ -291,73 +369,37 @@ export default function Reports() {
           setPrevKpis([])
         }
       }
-
-      // Meios
       {
-        let q = supabase
-          .from('v_report_payments_method')
-          .select('*')
-          .gte('dia', fromTs.toISOString())
-          .lte('dia', toTs.toISOString())
-          .order('dia', { ascending: true })
+        let q = supabase.from('v_report_payments_method').select('*').gte('dia', fromTs.toISOString()).lte('dia', toTs.toISOString()).order('dia', { ascending: true })
         if (compId) q = q.eq('company_id', compId)
         if (storeFilterId) q = q.eq('store_id', storeFilterId)
         const { data } = await q
         setPays((data || []) as PayRow[])
       }
-
-      // Top produtos
       {
-        let q = supabase
-          .from('v_report_top_products')
-          .select('*')
-          .gte('dia', fromTs.toISOString())
-          .lte('dia', toTs.toISOString())
-          .order('receita', { ascending: false })
-          .limit(50)
+        let q = supabase.from('v_report_top_products').select('*').gte('dia', fromTs.toISOString()).lte('dia', toTs.toISOString()).order('receita', { ascending: false }).limit(50)
         if (compId) q = q.eq('company_id', compId)
         if (storeFilterId) q = q.eq('store_id', storeFilterId)
         const { data } = await q
         setTops((data || []) as TopRow[])
       }
-
-      // Vendedor
       {
-        let q = supabase
-          .from('v_report_seller_kpis')
-          .select('*')
-          .gte('dia', fromTs.toISOString())
-          .lte('dia', toTs.toISOString())
+        let q = supabase.from('v_report_seller_kpis').select('*').gte('dia', fromTs.toISOString()).lte('dia', toTs.toISOString())
         if (compId) q = q.eq('company_id', compId)
         if (storeFilterId) q = q.eq('store_id', storeFilterId)
         if (seller) q = q.eq('user_id', seller)
         const { data } = await q.order('dia', { ascending: true })
         setSellers((data || []) as SellerRow[])
       }
-
-      // Por hora
       {
-        let q = supabase
-          .from('v_report_sales_by_hour')
-          .select('*')
-          .gte('dia_local', fromTs.toISOString())
-          .lte('dia_local', toTs.toISOString())
-          .order('hora_local', { ascending: true })
+        let q = supabase.from('v_report_sales_by_hour').select('*').gte('dia_local', fromTs.toISOString()).lte('dia_local', toTs.toISOString()).order('hora_local', { ascending: true })
         if (compId) q = q.eq('company_id', compId)
         if (storeFilterId) q = q.eq('store_id', storeFilterId)
         const { data } = await q
         setHours((data || []) as HourRow[])
       }
-
-      // Fechamentos
       {
-        let q = supabase
-          .from('v_report_cash_closures')
-          .select('*')
-          .gte('fechamento_at', fromTs.toISOString())
-          .lte('fechamento_at', toTs.toISOString())
-          .order('fechamento_at', { ascending: false })
-          .limit(100)
+        let q = supabase.from('v_report_cash_closures').select('*').gte('fechamento_at', fromTs.toISOString()).lte('fechamento_at', toTs.toISOString()).order('fechamento_at', { ascending: false }).limit(100)
         if (compId) q = q.eq('company_id', compId)
         if (storeFilterId) q = q.eq('store_id', storeFilterId)
         const { data } = await q
@@ -368,9 +410,56 @@ export default function Reports() {
     }
   }
 
+  async function loadRuptura() {
+    const storeId = storeFilterId
+    if (!storeId) return
+    setLoadingRuptura(true)
+    try {
+      const { data } = await supabase.from('v_grade_ruptura').select('*').eq('store_id', storeId).order('produto_nome', { ascending: true })
+      setRuptura((data || []) as RupturaRow[])
+    } finally {
+      setLoadingRuptura(false)
+    }
+  }
+
   useEffect(() => {
     if (canLoad) loadAll()
-  }, [store?.id, company?.id, scope, globalCompanyId, globalStoreId, comparePrev]) // carrega ao selecionar loja/empresa/escopo
+  }, [store?.id, company?.id, scope, globalCompanyId, globalStoreId, comparePrev])
+
+  async function loadFashionReports() {
+    const cId = scope === 'global' ? globalCompanyId : company?.id
+    if (!cId) return
+    const sId = storeFilterId || null
+    setLoadingFashion(true)
+    try {
+      const fromTs = new Date(from + 'T00:00:00').toISOString()
+      const toTs   = new Date(to   + 'T23:59:59').toISOString()
+      const [rv, gc, abc, inadimp] = await Promise.all([
+        supabase.rpc('fn_ranking_variante',     { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
+        supabase.rpc('fn_giro_colecao',         { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
+        supabase.rpc('fn_curva_abc',            { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
+        supabase.rpc('fn_inadimplencia_resumo', { p_company_id: cId }),
+      ])
+      setRankingVariante((rv.data || []) as RankingVarianteRow[])
+      setGiroColecao((gc.data || []) as GiroColecaoRow[])
+      const abcRows = (abc.data || []) as CurvaAbcRow[]
+      const totalRec = abcRows.reduce((a, r) => a + Number(r.receita), 0)
+      let acc = 0
+      const classified = abcRows.map(r => {
+        acc += Number(r.receita)
+        const pct = totalRec > 0 ? acc / totalRec : 0
+        return { ...r, curva: pct <= 0.8 ? 'A' : pct <= 0.95 ? 'B' : 'C' } as CurvaAbcRow
+      })
+      setCurvaAbc(classified)
+      setInadimplencia((inadimp.data || []) as InadimplenciaRow[])
+    } finally {
+      setLoadingFashion(false)
+    }
+  }
+
+  useEffect(() => {
+    if (tab === 'moda' && canLoad) { loadRuptura(); loadFashionReports() }
+  }, [tab, store?.id, globalStoreId])
 
   function quickRange(preset: 'hoje' | 'semana' | 'mes') {
     const now = new Date()
@@ -381,7 +470,7 @@ export default function Reports() {
     }
     if (preset === 'semana') {
       const d1 = new Date(now)
-      const day = d1.getDay() || 7 // 1..7
+      const day = d1.getDay() || 7
       d1.setDate(d1.getDate() - (day - 1))
       d1.setHours(0, 0, 0, 0)
       const d2 = new Date(d1)
@@ -401,7 +490,6 @@ export default function Reports() {
   }
 
   const sellerAgg = useMemo(() => {
-    // agrega por vendedor no período (se vierem vários dias)
     const map = new Map<string, { vendedor: string; cupons: number; fat: number; desc: number; itens: number; ticket: number; descPct: number }>()
     sellers.forEach(r => {
       const key = r.user_id || '—'
@@ -412,8 +500,7 @@ export default function Reports() {
       cur.itens += Number(r.itens || 0)
       map.set(key, cur)
     })
-    // calcula ticket/desc%
-    map.forEach((v) => {
+    map.forEach(v => {
       v.ticket = v.cupons > 0 ? v.fat / v.cupons : 0
       v.descPct = v.fat > 0 ? (v.desc * 100) / v.fat : 0
     })
@@ -441,9 +528,7 @@ export default function Reports() {
       const key = new Date(r.dia).toISOString().slice(0, 10)
       map.set(key, (map.get(key) || 0) + Number(r.faturamento_bruto || 0))
     })
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([day, valor]) => ({ day, valor }))
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([day, valor]) => ({ day, valor }))
   }, [kpis])
 
   const trend = useMemo(() => {
@@ -463,328 +548,852 @@ export default function Reports() {
     return b - a
   }, [trend])
 
+  const trendChartData = useMemo(() => {
+    const map = new Map<string, { day: string; vendas?: number; tendencia?: number; previsao?: number }>()
+    salesByDaySeries.forEach(r => { map.set(r.day, { ...map.get(r.day), day: r.day, vendas: r.valor }) })
+    trend.forEach(r => { map.set(r.day, { ...map.get(r.day), day: r.day, tendencia: r.valor }) })
+    forecast.forEach(r => { map.set(r.day, { ...map.get(r.day), day: r.day, previsao: r.valor }) })
+    return Array.from(map.values()).sort((a, b) => a.day.localeCompare(b.day))
+  }, [salesByDaySeries, trend, forecast])
+
+  // ── JSX ────────────────────────────────────────────────────────────────────
+
   return (
-    <div className="p-4 max-w-md mx-auto space-y-4">
-      <h2 className="text-xl font-semibold">Relatórios</h2>
+    <div className="pb-20">
 
-      {!canLoad && (
-        <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm">
-          Selecione uma empresa em <b>Config</b> para ver relatórios.
-        </div>
-      )}
+      {/* ── Sticky filter bar ── */}
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-100 shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-2.5 space-y-2">
 
-      <Card title="Visão">
-        {isOwner ? (
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                className={`rounded-xl border px-3 py-2 text-sm ${scope === 'company' ? 'bg-zinc-900 text-white' : 'bg-white'}`}
-                onClick={() => setScope('company')}
-              >
-                Por empresa
-              </button>
-              <button
-                className={`rounded-xl border px-3 py-2 text-sm ${scope === 'global' ? 'bg-zinc-900 text-white' : 'bg-white'}`}
-                onClick={() => setScope('global')}
-              >
-                Global
-              </button>
-            </div>
-            {scope === 'company' && (
-              <div>
-                <div className="text-xs text-zinc-500 mb-1">Empresa ativa</div>
+          {/* Scope selector — OWNER only */}
+          {isOwner && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-0.5 bg-slate-100 rounded-xl p-0.5">
+                {(['company', 'global'] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setScope(s)}
+                    className={`px-3 py-1.5 rounded-[10px] text-xs font-medium transition-all cursor-pointer ${scope === s ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    {s === 'company' ? 'Empresa' : 'Global'}
+                  </button>
+                ))}
+              </div>
+
+              {scope === 'company' && (
                 <select
-                  className="w-full rounded-2xl border px-3 py-2"
+                  className="flex-1 min-w-0 max-w-xs border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
                   value={company?.id || ''}
                   onChange={e => {
-                    const id = e.target.value
-                    const selected = companies.find(c => c.id === id)
+                    const selected = companies.find(c => c.id === e.target.value)
                     if (selected) setCompany(selected as any)
                   }}
                 >
-                  <option value="" disabled>Selecione...</option>
+                  <option value="" disabled>Selecione a empresa…</option>
                   {companies.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
-              </div>
-            )}
-            {scope === 'global' && (
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="text-xs text-zinc-500 mb-1">Filtrar por empresa</div>
+              )}
+
+              {scope === 'global' && (
+                <div className="flex gap-2 flex-1">
                   <select
-                    className="w-full rounded-2xl border px-3 py-2"
+                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
                     value={globalCompanyId}
-                    onChange={e => {
-                      setGlobalCompanyId(e.target.value)
-                      setGlobalStoreId('')
-                    }}
+                    onChange={e => { setGlobalCompanyId(e.target.value); setGlobalStoreId('') }}
                   >
-                    <option value="">Todas</option>
+                    <option value="">Todas empresas</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                   </select>
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500 mb-1">Filtrar por loja</div>
                   <select
-                    className="w-full rounded-2xl border px-3 py-2"
+                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
                     value={globalStoreId}
                     onChange={e => setGlobalStoreId(e.target.value)}
                   >
-                    <option value="">Todas</option>
+                    <option value="">Todas lojas</option>
                     {globalStores.map(s => (
                       <option key={s.id} value={s.id}>
-                        {s.nome} {companyMap.get(s.company_id) ? `• ${companyMap.get(s.company_id)}` : ''}
+                        {s.nome}{companyMap.get(s.company_id) ? ` · ${companyMap.get(s.company_id)}` : ''}
                       </option>
                     ))}
                   </select>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-xs text-zinc-500">Você está na visão da sua empresa.</div>
-        )}
-      </Card>
-
-      {/* Filtros */}
-      <Card title="Filtros">
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <div>
-            <div className="text-xs text-zinc-500 mb-1">De</div>
-            <input type="date" value={from} onChange={e=>setFrom(e.target.value)} className="w-full rounded-2xl border px-3 py-2" />
-          </div>
-          <div>
-            <div className="text-xs text-zinc-500 mb-1">Até</div>
-            <input type="date" value={to} onChange={e=>setTo(e.target.value)} className="w-full rounded-2xl border px-3 py-2" />
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => { quickRange('hoje'); canLoad && loadAll() }}>Hoje</Button>
-          <Button onClick={() => { quickRange('semana'); canLoad && loadAll() }}>Semana</Button>
-          <Button onClick={() => { quickRange('mes'); canLoad && loadAll() }}>Mês</Button>
-          <Button onClick={loadAll} disabled={!canLoad || loading}>{loading ? 'Atualizando...' : 'Atualizar'}</Button>
-          <label className="text-sm text-zinc-600 flex items-center gap-2">
-            <input type="checkbox" checked={comparePrev} onChange={e => setComparePrev(e.target.checked)} />
-            Comparar período anterior
-          </label>
-        </div>
-      </Card>
-
-      {/* Abas */}
-      <div className="flex gap-2">
-        <button onClick={()=>setTab('oper')} className={`px-3 py-2 rounded-2xl border ${tab==='oper'?'border-black font-semibold':'border-zinc-300'}`}>Operação</button>
-        <button onClick={()=>setTab('gestao')} className={`px-3 py-2 rounded-2xl border ${tab==='gestao'?'border-black font-semibold':'border-zinc-300'}`}>Gestão</button>
-      </div>
-
-      {/* OPERACIONAL */}
-      {tab === 'oper' && (
-        <>
-          {scope === 'global' && (
-            <Card title="Resumo por empresa (faturamento)">
-              <table className="w-full text-sm">
-                <thead><tr className="text-left text-zinc-500">
-                  <th className="py-1">Empresa</th><th>Cupons</th><th className="text-right">Faturamento</th>
-                </tr></thead>
-                <tbody>
-                  {companyAgg.slice(0, 10).map((r) => (
-                    <tr key={r.company_id} className="border-t">
-                      <td className="py-1">{r.nome}</td>
-                      <td>{r.cupons}</td>
-                      <td className="text-right">{formatBRL(r.fat)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="mt-2">
-                <Button onClick={() => csvDownload('resumo_empresas', companyAgg)}>Exportar CSV</Button>
-              </div>
-            </Card>
-          )}
-          {/* KPIs */}
-          <section className="grid grid-cols-2 gap-2">
-            <KPI label="Faturamento" value={formatBRL(kpiAgg.fat)} />
-            <KPI label="Cupons" value={String(kpiAgg.totalCup)} />
-            <KPI label="Ticket Médio" value={formatBRL(kpiAgg.ticket)} />
-            <KPI label="Descontos" value={formatBRL(kpiAgg.desc)} />
-            <KPI label="Itens" value={String(kpiAgg.itens)} />
-            {comparePrev && (
-              <KPI label="Var. Faturamento" value={`${(((kpiAgg.fat - prevKpiAgg.fat) / (prevKpiAgg.fat || 1)) * 100).toFixed(1)}%`} />
-            )}
-          </section>
-
-          {/* Mix de meios */}
-          <Card title="Vendas por meio">
-            <div className="space-y-2">
-              {payAgg.map(r => (
-                <div key={r.meio} className="flex items-center justify-between text-sm">
-                  <div className="flex-1">
-                    <div className="font-medium">{r.meio}</div>
-                    <div className="h-2 rounded-full bg-zinc-200 overflow-hidden mt-1">
-                      <div className="h-2" style={{ width: `${r.pct}%` }} />
-                    </div>
-                  </div>
-                  <div className="ml-3 text-right">
-                    <div className="font-semibold">{formatBRL(r.gross)}</div>
-                    <div className="text-xs text-zinc-500">Líquido {formatBRL(r.net)} · Taxas {formatBRL(r.fees)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3">
-              <Button onClick={() => csvDownload('mix_meios', payAgg)}>Exportar CSV</Button>
-            </div>
-          </Card>
-
-          {/* Vendas por hora */}
-          <Card title="Vendas por hora (bruto)">
-            <div className="grid grid-cols-6 gap-2">
-              {hoursAgg.arr.map(({ h, total }) => (
-                <div key={h} className="text-center">
-                  <div className="h-16 w-3 mx-auto rounded bg-zinc-200 overflow-hidden">
-                    <div className="w-3" style={{ height: `${Math.round((total / (hoursAgg.max || 1)) * 100)}%` }} />
-                  </div>
-                  <div className="text-[10px] mt-1">{h.toString().padStart(2, '0')}h</div>
-                </div>
-              ))}
-            </div>
-            <div className="text-right text-sm mt-2">Total período: <b>{formatBRL(hours.reduce((a, r) => a + Number(r.total_gross || 0), 0))}</b></div>
-            <div className="mt-2">
-              <Button onClick={() => csvDownload('vendas_por_hora', hours)}>Exportar CSV</Button>
-            </div>
-          </Card>
-
-          {/* Tendência e previsão */}
-          <Card title="Tendência e previsão (simples)">
-            <div className="text-xs text-zinc-500 mb-2">Média móvel (3 dias) e previsão dos próximos 3 dias.</div>
-            {trend.length === 0 ? (
-              <div className="text-sm text-zinc-500">Sem dados suficientes.</div>
-            ) : (
-              <div className="space-y-1 text-sm">
-                {trend.slice(-5).map(t => (
-                  <div key={t.day} className="flex items-center justify-between">
-                    <div>{new Date(t.day + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
-                    <div className="font-semibold">{formatBRL(t.valor)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {forecast.length > 0 && (
-              <div className="mt-2 text-sm">
-                <div className="text-xs text-zinc-500 mb-1">Previsão</div>
-                {forecast.map(f => (
-                  <div key={f.day} className="flex items-center justify-between">
-                    <div>{new Date(f.day + 'T00:00:00').toLocaleDateString('pt-BR')}</div>
-                    <div className="font-semibold">{formatBRL(f.valor)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="mt-2">
-              <Button onClick={() => csvDownload('tendencia_previsao', [...trend, ...forecast])}>Exportar CSV</Button>
-            </div>
-          </Card>
-
-          <Card title="Indicador rápido">
-            <div className="text-sm">
-              {trendDelta < 0 ? (
-                <div className="text-amber-700">
-                  Tendência de queda nas vendas nos últimos dias. Considere ações comerciais.
-                </div>
-              ) : (
-                <div className="text-emerald-700">
-                  Tendência estável ou de crescimento.
-                </div>
               )}
             </div>
-          </Card>
+          )}
 
-          {/* Top produtos */}
-          <Card title="Top produtos (receita)">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-zinc-500">
-                <th className="py-1">Produto</th><th>Qtde</th><th className="text-right">Receita</th>
-              </tr></thead>
-              <tbody>
-                {tops.slice(0,10).map((r, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="py-1">{r.nome}</td>
-                    <td>{r.qtde_total}</td>
-                    <td className="text-right">{formatBRL(r.receita)}</td>
-                  </tr>
+          {/* Date + quick pills + actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-0.5 bg-slate-100 rounded-xl p-0.5">
+              {(['hoje', 'semana', 'mes'] as const).map(p => (
+                <button
+                  key={p}
+                  onClick={() => { quickRange(p); canLoad && loadAll() }}
+                  className="px-3 py-1.5 rounded-[10px] text-xs font-medium text-slate-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer"
+                >
+                  {p === 'hoje' ? 'Hoje' : p === 'semana' ? 'Semana' : 'Mês'}
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="date" value={from} onChange={e => setFrom(e.target.value)}
+              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+            />
+            <span className="text-slate-300 text-xs">–</span>
+            <input
+              type="date" value={to} onChange={e => setTo(e.target.value)}
+              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+            />
+
+            <label className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
+              <input type="checkbox" checked={comparePrev} onChange={e => setComparePrev(e.target.checked)} className="rounded" />
+              Comparar
+            </label>
+
+            <button
+              onClick={loadAll}
+              disabled={!canLoad || loading}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1E40AF] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors hover:bg-[#1E3A8A]"
+            >
+              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+              {loading ? 'Buscando…' : 'Atualizar'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main content ── */}
+      <div className="max-w-5xl mx-auto px-4 pt-4 pb-6 space-y-4">
+
+        {!canLoad && (
+          <div className="rounded-xl border border-amber-100 bg-amber-50 text-amber-700 text-xs p-3">
+            Selecione uma empresa em <b>Config</b> para ver relatórios.
+          </div>
+        )}
+
+        {/* ── Tab pills ── */}
+        <div className="flex p-1 bg-slate-100 rounded-2xl w-fit">
+          {(['oper', 'gestao', 'moda'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                tab === t ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {t === 'oper' ? 'Operação' : t === 'gestao' ? 'Gestão' : 'Moda'}
+            </button>
+          ))}
+        </div>
+
+        {/* ══ OPERACIONAL ══ */}
+        {tab === 'oper' && (
+          <>
+            {/* Global company table */}
+            {scope === 'global' && (
+              <Card title="Resumo por empresa">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Empresa</th>
+                        <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Cupons</th>
+                        <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Faturamento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companyAgg.slice(0, 10).map((r, i) => (
+                        <tr key={r.company_id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50/50' : ''}`}>
+                          <td className="py-2.5 px-3 text-slate-800 font-medium">{r.nome}</td>
+                          <td className="py-2.5 px-3 text-slate-500">{r.cupons}</td>
+                          <td className="py-2.5 px-3 text-right font-semibold text-[#1E40AF]">{formatBRL(r.fat)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-3">
+                  <Button onClick={() => csvDownload('resumo_empresas', companyAgg)}>Exportar CSV</Button>
+                </div>
+              </Card>
+            )}
+
+            {/* ── KPI Hero + secondary ── */}
+            {loading && kpis.length === 0 ? (
+              <>
+                <div className="rounded-2xl bg-slate-200 animate-pulse h-32" />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="rounded-xl bg-slate-100 animate-pulse h-20" />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Hero: Faturamento */}
+                <div className="bg-gradient-to-br from-[#1E40AF] to-[#1E3A8A] rounded-2xl p-5 text-white shadow-lg">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold uppercase tracking-widest opacity-60 mb-1">Faturamento do período</div>
+                      <div className="text-4xl font-bold tracking-tight">{formatBRL(kpiAgg.fat)}</div>
+                    </div>
+                    {comparePrev && prevKpiAgg.fat > 0 && (
+                      <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold shrink-0 ${
+                        kpiAgg.fat >= prevKpiAgg.fat ? 'bg-emerald-500/20 text-emerald-200' : 'bg-rose-500/20 text-rose-200'
+                      }`}>
+                        {kpiAgg.fat >= prevKpiAgg.fat ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        {(((kpiAgg.fat - prevKpiAgg.fat) / prevKpiAgg.fat) * 100).toFixed(1)}%
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm opacity-70">
+                    <span>{kpiAgg.totalCup} cupons</span>
+                    <span>·</span>
+                    <span>Ticket {formatBRL(kpiAgg.ticket)}</span>
+                    <span>·</span>
+                    <span>{kpiAgg.itens} itens</span>
+                    {comparePrev && prevKpiAgg.fat > 0 && (
+                      <><span>·</span><span>Anterior {formatBRL(prevKpiAgg.fat)}</span></>
+                    )}
+                  </div>
+                </div>
+
+                {/* Secondary KPIs 2×2 / 4-col */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <KPI label="Cupons" value={String(kpiAgg.totalCup)} />
+                  <KPI label="Ticket Médio" value={formatBRL(kpiAgg.ticket)} />
+                  <KPI label="Descontos" value={formatBRL(kpiAgg.desc)} />
+                  <KPI label="Itens vendidos" value={String(kpiAgg.itens)} />
+                </div>
+              </>
+            )}
+
+            {/* ── Charts row: Mix + Horas ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              {/* Payment mix */}
+              <Card title="Mix de pagamentos">
+                {loading && pays.length === 0 ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />)}
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      {payAgg.map(r => {
+                        const color = PIE_COLORS[r.meio] || '#94A3B8'
+                        return (
+                          <div key={r.meio}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+                                <span className="text-sm font-medium text-slate-700">{MEIO_LABEL[r.meio]}</span>
+                                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">{r.pct}%</span>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-slate-800">{formatBRL(r.gross)}</div>
+                                {r.fees > 0 && <div className="text-xs text-slate-400">-{formatBRL(r.fees)} taxas</div>}
+                              </div>
+                            </div>
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-700"
+                                style={{ width: `${r.pct}%`, background: color }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="mt-4">
+                      <Button onClick={() => csvDownload('mix_meios', payAgg)}>Exportar CSV</Button>
+                    </div>
+                  </>
+                )}
+              </Card>
+
+              {/* Vendas por hora */}
+              <Card title="Vendas por hora">
+                {loading && hours.length === 0 ? (
+                  <div className="h-[160px] bg-slate-100 rounded-xl animate-pulse" />
+                ) : (
+                  <>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={hoursAgg.arr} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
+                        <XAxis
+                          dataKey="h"
+                          tickFormatter={(h: number) => h % 6 === 0 ? `${h}h` : ''}
+                          tick={{ fontSize: 10, fill: '#94A3B8' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis hide />
+                        <Tooltip
+                          cursor={{ fill: '#F1F5F9' }}
+                          content={({ active, payload }: any) => {
+                            if (!active || !payload?.length) return null
+                            const h = payload[0]?.payload?.h
+                            return (
+                              <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg text-xs">
+                                <div className="font-semibold text-slate-600 mb-0.5">{String(h).padStart(2, '0')}h</div>
+                                <div className="text-[#1E40AF] font-bold">{formatBRL(payload[0]?.value as number || 0)}</div>
+                              </div>
+                            )
+                          }}
+                        />
+                        <Bar dataKey="total" radius={[3, 3, 0, 0]} maxBarSize={18}>
+                          {hoursAgg.arr.map((entry, i) => (
+                            <Cell
+                              key={i}
+                              fill={entry.total > 0 && entry.total === hoursAgg.max ? '#1E40AF' : '#BFDBFE'}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <div className="flex items-center justify-between mt-1 text-xs text-slate-400">
+                      <span>Pico destacado em azul</span>
+                      <span>Total: <span className="font-semibold text-slate-600">{formatBRL(hours.reduce((a, r) => a + Number(r.total_gross || 0), 0))}</span></span>
+                    </div>
+                    <div className="mt-2.5">
+                      <Button onClick={() => csvDownload('vendas_por_hora', hours)}>Exportar CSV</Button>
+                    </div>
+                  </>
+                )}
+              </Card>
+            </div>
+
+            {/* ── Trend + Forecast (full width) ── */}
+            <Card
+              title="Tendência e previsão"
+              action={
+                trendChartData.length > 0 ? (
+                  <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    trendDelta >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'
+                  }`}>
+                    {trendDelta >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                    {trendDelta >= 0 ? 'Em crescimento' : 'Queda recente'}
+                  </span>
+                ) : null
+              }
+            >
+              {loading && trendChartData.length === 0 ? (
+                <div className="h-[200px] bg-slate-100 rounded-xl animate-pulse" />
+              ) : trendChartData.length === 0 ? (
+                <div className="h-[100px] flex items-center justify-center text-sm text-slate-400">Sem dados suficientes para o período.</div>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <AreaChart data={trendChartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="gradVendas" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#93C5FD" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#93C5FD" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gradPrevisao" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#FCD34D" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#FCD34D" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="day"
+                        tickFormatter={(d: string) => new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={32}
+                      />
+                      <Tooltip
+                        formatter={(v: any, name: string) => [
+                          formatBRL(v as number),
+                          name === 'vendas' ? 'Vendas' : name === 'tendencia' ? 'Tendência (MM3)' : 'Previsão',
+                        ]}
+                        labelFormatter={(l: string) => new Date(l + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        contentStyle={{ border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                      />
+                      <Area type="monotone" dataKey="vendas"    stroke="#93C5FD" strokeWidth={1.5} fill="url(#gradVendas)"   dot={false} connectNulls={false} name="vendas" />
+                      <Area type="monotone" dataKey="tendencia" stroke="#1E40AF" strokeWidth={2}   fill="none"                dot={false} connectNulls={true}  name="tendencia" />
+                      <Area type="monotone" dataKey="previsao"  stroke="#D97706" strokeWidth={2}   fill="url(#gradPrevisao)" strokeDasharray="5 5" dot={false} connectNulls={true} name="previsao" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-px bg-[#93C5FD]" style={{ borderTop: '2px solid #93C5FD' }} />Vendas</span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-px" style={{ borderTop: '2px solid #1E40AF' }} />Tendência</span>
+                    <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-px" style={{ borderTop: '2px dashed #D97706' }} />Previsão</span>
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('tendencia_previsao', [...trend, ...forecast])}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+
+            {/* ── Top produtos: horizontal bars ── */}
+            <Card title="Top produtos — receita">
+              {loading && tops.length === 0 ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => <div key={i} className="h-9 bg-slate-100 rounded-lg animate-pulse" />)}
+                </div>
+              ) : tops.length === 0 ? (
+                <div className="text-sm text-slate-400 py-6 text-center">Sem dados de produtos para o período.</div>
+              ) : (() => {
+                const maxRec = tops[0]?.receita || 1
+                return (
+                  <>
+                    <div className="space-y-3">
+                      {tops.slice(0, 10).map((r, i) => (
+                        <div key={i}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xs font-bold text-slate-300 w-5 text-right shrink-0">{i + 1}</span>
+                              <span className="text-sm text-slate-700 font-medium truncate">{r.nome}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              <span className="text-xs text-slate-400">{r.qtde_total} un.</span>
+                              <span className="text-sm font-bold text-[#1E40AF]">{formatBRL(r.receita)}</span>
+                            </div>
+                          </div>
+                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden ml-7">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${(r.receita / maxRec) * 100}%`,
+                                background: i === 0 ? '#1E40AF' : i < 3 ? '#3B82F6' : '#BFDBFE',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4">
+                      <Button onClick={() => csvDownload('top_produtos', tops)}>Exportar CSV</Button>
+                    </div>
+                  </>
+                )
+              })()}
+            </Card>
+          </>
+        )}
+
+        {/* ══ MODA ══ */}
+        {tab === 'moda' && (
+          <>
+            <Card title="Grade furada — ruptura parcial">
+              <div className="text-xs text-slate-400 mb-3">
+                Variantes sem estoque enquanto outros tamanhos/cores do mesmo produto ainda têm. São vendas perdidas esperando reposição.
+              </div>
+              {!storeFilterId ? (
+                <div className="text-sm text-amber-600 bg-amber-50 rounded-xl px-3 py-2.5">Selecione uma loja para ver a grade furada.</div>
+              ) : loadingRuptura ? (
+                <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : ruptura.length === 0 ? (
+                <div className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2.5">Nenhuma ruptura parcial de grade. Estoque completo!</div>
+              ) : (
+                <>
+                  <div className="text-xs text-slate-400 mb-2">{ruptura.length} variante(s) com ruptura</div>
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {ruptura.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm text-slate-800 truncate">{r.produto_nome}</div>
+                          <div className="text-xs text-slate-400">{r.produto_sku}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                          {r.tamanho && <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{r.tamanho}</span>}
+                          {r.cor && <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{r.cor}</span>}
+                          <span className="text-xs text-rose-500 font-bold">0 un.</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('grade_furada', ruptura)}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+
+            <Card title="O que fazer com esta lista">
+              <div className="space-y-2">
+                {[
+                  'Contate seu fornecedor para repor os tamanhos/cores zerados',
+                  'Priorize os itens de maior venda (curva A)',
+                  'Considere transferência de estoque de outra loja se disponível',
+                  'Produtos com grade furada há mais de 15 dias podem indicar never-sell — avalie descontinuar',
+                ].map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                    <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-[#1E40AF] shrink-0" />
+                    {tip}
+                  </div>
                 ))}
-              </tbody>
-            </table>
-            <div className="mt-2">
-              <Button onClick={() => csvDownload('top_produtos', tops)}>Exportar CSV</Button>
-            </div>
-          </Card>
-        </>
-      )}
+              </div>
+            </Card>
 
-      {/* GESTÃO */}
-      {tab === 'gestao' && (
-        <>
-          {/* Filtro de vendedor */}
-          <Card title="Vendedor">
-            <div className="flex gap-2">
-              <select value={seller} onChange={e=>setSeller(e.target.value)} className="rounded-2xl border px-3 py-2 flex-1">
-                <option value="">Todos</option>
-                {sellerOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
-              <Button onClick={loadAll} disabled={!canLoad || loading}>{loading ? 'Carregando...' : 'Aplicar'}</Button>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-slate-400">Relatórios do período selecionado</div>
+              <Button onClick={loadFashionReports} disabled={!canLoad || loadingFashion}>
+                {loadingFashion ? 'Carregando…' : 'Atualizar'}
+              </Button>
             </div>
-          </Card>
 
-          {/* Performance por vendedor */}
-          <Card title="Performance por vendedor (período)">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-zinc-500">
-                <th className="py-1">Vendedor</th><th>Cupons</th><th>Itens</th><th>Ticket</th><th className="text-right">Faturamento</th>
-              </tr></thead>
-              <tbody>
-                {sellerAgg.map((r, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="py-1">{r.vendedor}</td>
-                    <td>{r.cupons}</td>
-                    <td>{r.itens}</td>
-                    <td>{formatBRL(r.ticket)}</td>
-                    <td className="text-right">{formatBRL(r.fat)}</td>
-                  </tr>
+            <Card title="Ranking tamanho × cor">
+              <div className="text-xs text-slate-400 mb-3">Variantes mais vendidas no período.</div>
+              {loadingFashion ? (
+                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : rankingVariante.length === 0 ? (
+                <div className="text-sm text-slate-400">Nenhuma venda de variante no período.</div>
+              ) : (
+                <>
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {rankingVariante.slice(0, 20).map((r, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2">
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-sm text-slate-800">{r.produto_nome}</div>
+                          <div className="flex gap-1 mt-0.5">
+                            {r.tamanho !== '—' && <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full">{r.tamanho}</span>}
+                            {r.cor !== '—' && <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">{r.cor}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right ml-2 shrink-0">
+                          <div className="font-semibold text-[#1E40AF] text-sm">{formatBRL(r.receita)}</div>
+                          <div className="text-xs text-slate-400">{r.qtde_total} un.</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('ranking_variante', rankingVariante)}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+
+            <Card title="Giro por coleção">
+              <div className="text-xs text-slate-400 mb-3">Faturamento e volume de peças por coleção.</div>
+              {loadingFashion ? (
+                <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : giroColecao.length === 0 ? (
+                <div className="text-sm text-slate-400">Nenhuma venda no período.</div>
+              ) : (() => {
+                const totalGiro = giroColecao.reduce((a, r) => a + Number(r.receita), 0)
+                return (
+                  <>
+                    <div className="space-y-3">
+                      {giroColecao.map((r, i) => {
+                        const pct = totalGiro > 0 ? (Number(r.receita) / totalGiro) * 100 : 0
+                        return (
+                          <div key={i}>
+                            <div className="flex items-center justify-between text-sm mb-1.5">
+                              <span className="font-medium text-slate-700 truncate">{r.colecao_nome}</span>
+                              <span className="ml-2 shrink-0 text-slate-500 text-xs">{formatBRL(r.receita)} · {r.qtde_total} un.</span>
+                            </div>
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-[#1E40AF] rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="mt-3">
+                      <Button onClick={() => csvDownload('giro_colecao', giroColecao)}>Exportar CSV</Button>
+                    </div>
+                  </>
+                )
+              })()}
+            </Card>
+
+            <Card title="Curva ABC — produtos">
+              <div className="text-xs text-slate-400 mb-3">A = top 80% da receita · B = 80–95% · C = cauda longa</div>
+              {loadingFashion ? (
+                <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="h-9 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : curvaAbc.length === 0 ? (
+                <div className="text-sm text-slate-400">Nenhuma venda no período.</div>
+              ) : (
+                <>
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {curvaAbc.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            r.curva === 'A' ? 'bg-emerald-100 text-emerald-700' : r.curva === 'B' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                          }`}>{r.curva}</span>
+                          <span className="truncate text-sm text-slate-700">{r.nome}</span>
+                        </div>
+                        <div className="text-right ml-2 shrink-0">
+                          <div className="font-semibold text-[#1E40AF] text-sm">{formatBRL(r.receita)}</div>
+                          <div className="text-xs text-slate-400">{r.qtde_total} un.</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('curva_abc', curvaAbc)}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+
+            <Card title="Inadimplência — crediário">
+              <div className="text-xs text-slate-400 mb-3">Clientes com parcelas atrasadas.</div>
+              {loadingFashion ? (
+                <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-12 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : inadimplencia.length === 0 ? (
+                <div className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2.5">Nenhuma parcela atrasada. Parabéns!</div>
+              ) : (
+                <>
+                  <div className="text-xs text-slate-400 mb-2">
+                    {inadimplencia.length} cliente(s) · <span className="text-rose-500 font-semibold">{formatBRL(inadimplencia.reduce((a, r) => a + Number(r.total_atrasado), 0))}</span> em atraso
+                  </div>
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {inadimplencia.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm text-slate-800 truncate">{r.nome}</div>
+                          <div className="text-xs text-slate-400">
+                            {r.contato || 'Sem contato'} · {r.parcelas_atrasadas} parcela(s)
+                            {r.primeiro_atraso && ` · desde ${new Date(r.primeiro_atraso + 'T00:00:00').toLocaleDateString('pt-BR')}`}
+                          </div>
+                        </div>
+                        <div className="text-right ml-2 shrink-0">
+                          <div className="font-semibold text-rose-600 text-sm">{formatBRL(r.total_atrasado)}</div>
+                          <div className="text-xs text-slate-400">{formatBRL(r.total_aberto)} total</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('inadimplencia', inadimplencia)}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+          </>
+        )}
+
+        {/* ══ GESTÃO ══ */}
+        {tab === 'gestao' && (
+          <>
+            <Card title="Filtrar por vendedor">
+              <div className="flex gap-2">
+                <select
+                  value={seller}
+                  onChange={e => setSeller(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white flex-1 cursor-pointer"
+                >
+                  <option value="">Todos os vendedores</option>
+                  {sellerOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+                <Button onClick={loadAll} disabled={!canLoad || loading}>{loading ? 'Carregando…' : 'Aplicar'}</Button>
+              </div>
+            </Card>
+
+            <Card title="Performance por vendedor">
+              {loading && sellerAgg.length === 0 ? (
+                <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : sellerAgg.length === 0 ? (
+                <div className="text-sm text-slate-400 py-4 text-center">Sem dados de vendedores para o período.</div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[480px]">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                          <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Vendedor</th>
+                          <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Cupons</th>
+                          <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Itens</th>
+                          <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Ticket</th>
+                          <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3">Faturamento</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sellerAgg.map((r, i) => (
+                          <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
+                            <td className="py-2.5 px-3 font-medium text-slate-800">{r.vendedor}</td>
+                            <td className="py-2.5 px-3 text-slate-500">{r.cupons}</td>
+                            <td className="py-2.5 px-3 text-slate-500">{r.itens}</td>
+                            <td className="py-2.5 px-3 text-slate-500">{formatBRL(r.ticket)}</td>
+                            <td className="py-2.5 px-3 text-right font-semibold text-[#1E40AF]">{formatBRL(r.fat)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('vendedores', sellerAgg)}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+
+            <Card title="Fechamentos de caixa">
+              {closures.length === 0 && !loading ? (
+                <div className="text-sm text-slate-400 py-4 text-center">Nenhum fechamento no período.</div>
+              ) : loading && closures.length === 0 ? (
+                <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[640px]">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                          {['Aberto', 'Fechado', 'Operador', 'Esperado', 'Contado', 'Diferença'].map(h => (
+                            <th key={h} className={`text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 px-3 ${h === 'Diferença' ? 'text-right' : 'text-left'}`}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {closures.map((r, i) => (
+                          <tr key={i} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50/60' : ''}`}>
+                            <td className="py-2.5 px-3 text-slate-600">{new Date(r.abertura_at).toLocaleString('pt-BR')}</td>
+                            <td className="py-2.5 px-3 text-slate-600">{r.fechamento_at ? new Date(r.fechamento_at).toLocaleString('pt-BR') : '—'}</td>
+                            <td className="py-2.5 px-3 font-medium text-slate-800">{r.operador}</td>
+                            <td className="py-2.5 px-3 text-slate-600">{formatBRL(r.esperado_em_dinheiro)}</td>
+                            <td className="py-2.5 px-3 text-slate-600">{formatBRL(r.valor_final)}</td>
+                            <td className={`py-2.5 px-3 text-right font-semibold ${r.diferenca === 0 ? 'text-slate-500' : r.diferenca > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {formatBRL(r.diferenca)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => csvDownload('fechamentos_caixa', closures)}>Exportar CSV</Button>
+                  </div>
+                </>
+              )}
+            </Card>
+          </>
+        )}
+
+        {/* ══ Histórico de vendas (admin) ══ */}
+        {isAdmin && (
+          <Card title="Histórico de vendas">
+            <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+              <div className="flex gap-1.5 flex-wrap">
+                {(['all', 'PAGA', 'PENDENTE', 'CANCELADA'] as const).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setSalesFilter(f)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                      salesFilter === f ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {f === 'all' ? 'Todas' : f === 'PAGA' ? 'Pagas' : f === 'PENDENTE' ? 'Pendentes' : 'Canceladas'}
+                  </button>
                 ))}
-              </tbody>
-            </table>
-            <div className="mt-2">
-              <Button onClick={() => csvDownload('vendedores', sellerAgg)}>Exportar CSV</Button>
+              </div>
+              <button
+                onClick={loadSalesHistory}
+                disabled={loadingSales}
+                className="text-xs border border-slate-200 rounded-xl px-3 py-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer transition-colors"
+              >
+                {loadingSales ? 'Carregando…' : salesHistory.length === 0 ? 'Carregar vendas' : 'Atualizar'}
+              </button>
             </div>
-          </Card>
 
-          {/* Fechamentos de caixa */}
-          <Card title="Fechamentos de caixa">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-zinc-500">
-                <th className="py-1">Aberto</th><th>Fechado</th><th>Operador</th><th>Esperado</th><th>Contado</th><th className="text-right">Diferença</th>
-              </tr></thead>
-              <tbody>
-                {closures.map((r, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="py-1">{new Date(r.abertura_at).toLocaleString('pt-BR')}</td>
-                    <td>{r.fechamento_at ? new Date(r.fechamento_at).toLocaleString('pt-BR') : '—'}</td>
-                    <td>{r.operador}</td>
-                    <td>{formatBRL(r.esperado_em_dinheiro)}</td>
-                    <td>{formatBRL(r.valor_final)}</td>
-                    <td className={`text-right ${r.diferenca === 0 ? '' : (r.diferenca > 0 ? 'text-green-600' : 'text-red-600')}`}>
-                      {formatBRL(r.diferenca)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="mt-2">
-              <Button onClick={() => csvDownload('fechamentos_caixa', closures)}>Exportar CSV</Button>
+            {salesHistory.length === 0 && !loadingSales && (
+              <div className="text-sm text-slate-400 py-8 text-center">Clique em "Carregar vendas" para ver o histórico.</div>
+            )}
+            {loadingSales && (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}
+              </div>
+            )}
+
+            {salesHistory.length > 0 && (
+              <div className="space-y-1.5">
+                {salesHistory
+                  .filter(s => salesFilter === 'all' || s.status === salesFilter)
+                  .map(s => {
+                    const isExpanded = expandedSaleId === s.id
+                    const items = saleItemsMap.get(s.id) || []
+                    const statusColor = s.status === 'PAGA'
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : s.status === 'CANCELADA'
+                      ? 'bg-slate-100 text-slate-500'
+                      : 'bg-amber-50 text-amber-600'
+                    return (
+                      <div key={s.id} className="rounded-xl border border-slate-200 overflow-hidden">
+                        <div className="flex items-center gap-2 px-3 py-2.5">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-[#1E1B4B]">{formatBRL(s.total)}</span>
+                              {s.desconto > 0 && <span className="text-xs text-slate-400">-{formatBRL(s.desconto)}</span>}
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor}`}>{s.status}</span>
+                            </div>
+                            <div className="text-xs text-slate-400 mt-0.5 flex gap-2 flex-wrap">
+                              <span>{new Date(s.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                              {s.store_nome && <span>· {s.store_nome}</span>}
+                              {s.customer_nome && <span>· {s.customer_nome}</span>}
+                              {s.user_nome && <span>· {s.user_nome}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => toggleSaleItems(s.id)}
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isExpanded ? 'text-[#1E40AF] bg-[#EFF6FF]' : 'text-slate-400 hover:text-[#1E40AF] hover:bg-[#EFF6FF]'}`}
+                              title="Ver itens"
+                            >
+                              <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d={isExpanded ? 'M19 9l-7 7-7-7' : 'M9 5l7 7-7 7'} />
+                              </svg>
+                            </button>
+                            {s.status !== 'CANCELADA' && (
+                              cancelConfirmId === s.id ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => cancelSale(s.id)}
+                                    disabled={cancelling}
+                                    className="text-xs bg-rose-500 hover:bg-rose-600 text-white px-2 py-1 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
+                                  >
+                                    {cancelling ? '…' : 'Confirmar'}
+                                  </button>
+                                  <button onClick={() => setCancelConfirmId(null)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer px-1">×</button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setCancelConfirmId(s.id)}
+                                  className="text-xs text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded-lg cursor-pointer transition-colors font-medium"
+                                  title="Cancelar venda"
+                                >
+                                  Cancelar
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-2 space-y-1">
+                            {items.length === 0 && <div className="text-xs text-slate-400">Carregando itens…</div>}
+                            {items.map(item => (
+                              <div key={item.id} className="flex items-center justify-between text-xs">
+                                <span className="text-slate-700">{item.qtde}× {item.nome}</span>
+                                <span className="text-slate-500">
+                                  {formatBRL(item.preco_unit)}
+                                  {item.desconto > 0 && <span className="text-slate-400 ml-1">-{formatBRL(item.desconto)}</span>}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+              </div>
+            )}
+            <div className="mt-3 text-xs text-slate-400">
+              Cancelar uma venda altera apenas o status. Ajuste o estoque manualmente em Estoque se necessário.
             </div>
           </Card>
-        </>
-      )}
+        )}
+      </div>
     </div>
   )
 }

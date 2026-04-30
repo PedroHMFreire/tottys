@@ -32,14 +32,31 @@ type Product = {
 type EditableProductRowProps = {
   product: Product;
   onUpdate: () => void;
+  onDelete: (id: string) => void;
 }
 
-function EditableProductRow({ product, onUpdate }: EditableProductRowProps) {
+function EditableProductRow({ product, onUpdate, onDelete }: EditableProductRowProps) {
   const [edit, setEdit] = useState<{ [k: string]: boolean }>({});
   const [fields, setFields] = useState<Product>({ ...product });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', product.id);
+      if (error) throw error;
+      onDelete(product.id);
+    } catch (e: any) {
+      setError(e?.message || 'Não foi possível apagar o produto.');
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   function handleEdit(field: keyof Product) {
     setEdit(e => ({ ...e, [field]: true }));
@@ -179,7 +196,7 @@ function EditableProductRow({ product, onUpdate }: EditableProductRowProps) {
           )}
         </div>
 
-        {/* Ativo/Inativo + Botão Abrir */}
+        {/* Ativo/Inativo + Botão Abrir + Apagar */}
         <div className="flex items-center gap-2">
           <select
             value={fields.ativo ? 'ativo' : 'inativo'}
@@ -191,10 +208,37 @@ function EditableProductRow({ product, onUpdate }: EditableProductRowProps) {
             <option value="inativo">Inativo</option>
           </select>
           <Button className="bg-zinc-700 text-white px-3 py-1" onClick={() => setShowModal(true)}>Abrir</Button>
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Apagar produto"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+              </svg>
+            </button>
+          ) : (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-xs bg-rose-500 hover:bg-rose-600 text-white px-2 py-1 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
+              >
+                {deleting ? '…' : 'Confirmar'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-xs text-slate-400 hover:text-slate-600 px-1 cursor-pointer"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {error && <div className="text-xs text-amber-700 mt-1">{error}</div>}
+      {error && <div className="text-xs text-rose-600 mt-1">{error}</div>}
 
       {showModal && (
         <NewProductModal
@@ -209,7 +253,7 @@ function EditableProductRow({ product, onUpdate }: EditableProductRowProps) {
 
 export default function Products() {
   const [searchParams] = useSearchParams();
-  const { company, setCompany } = useApp();
+  const { company, setCompany, store } = useApp();
 
   const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -342,36 +386,38 @@ export default function Products() {
   }, [companyId]);
 
   return (
-    <div className="pb-24 max-w-md mx-auto p-4 space-y-4">
+    <div className="pb-8 max-w-4xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Produtos</h1>
-      </div>
-
-      <div className="rounded-2xl border bg-white p-3">
-        <div className="text-sm font-semibold mb-2">Ações</div>
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <Button onClick={() => setShowImport(true)}>Importar em Lote</Button>
-          <Button className="bg-zinc-800" onClick={() => setShowNew(true)}>Cadastrar Novo</Button>
+        <div>
+          <h1 className="text-lg font-semibold text-[#1E1B4B]">Produtos</h1>
+          <p className="text-xs text-slate-400 mt-0.5">Gerencie o catálogo da empresa</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Button
-              className="bg-zinc-800 text-white"
+              variant="ghost"
+              size="sm"
               onClick={() => setShowExportMenu(v => !v)}
             >
-              Baixar Produtos
+              Exportar
             </Button>
             {showExportMenu && (
-              <div className="absolute left-0 mt-2 z-10 bg-white border rounded shadow text-sm">
+              <div className="absolute right-0 mt-1 z-10 bg-white border border-slate-200 rounded-xl shadow-md text-sm min-w-[130px]">
                 <button
-                  className="block px-4 py-2 w-full text-left hover:bg-zinc-100"
+                  className="block px-4 py-2.5 w-full text-left hover:bg-slate-50 text-slate-700 text-xs rounded-xl cursor-pointer"
                   onClick={() => exportProducts('xlsx')}
                 >
-                  Baixar Excel
+                  Baixar Excel (.xlsx)
                 </button>
               </div>
             )}
           </div>
+          <Button variant="secondary" size="sm" onClick={() => setShowImport(true)}>
+            Importar
+          </Button>
+          <Button size="sm" onClick={() => setShowNew(true)}>
+            + Novo produto
+          </Button>
         </div>
       </div>
 
@@ -424,28 +470,37 @@ export default function Products() {
       </Card>
 
       <Card title="Catálogo">
-        <div className="mb-2 flex gap-2">
+        <div className="mb-3 flex gap-2">
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && search()}
-            className="rounded-2xl border px-3 py-2 w-full"
-            placeholder="SKU, Nome ou EAN"
+            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors"
+            placeholder="Buscar por SKU, nome ou EAN…"
             autoComplete="off"
           />
-          <Button onClick={search} disabled={loading || !companyId}>
-            {loading ? 'Buscando...' : 'Buscar'}
+          <Button size="sm" onClick={search} disabled={loading || !companyId}>
+            {loading ? 'Buscando…' : 'Buscar'}
           </Button>
         </div>
 
-        {error && <div className="text-xs text-amber-700 mb-2">{error}</div>}
+        {error && (
+          <div className="rounded-xl bg-amber-50 border border-amber-100 text-amber-700 px-3 py-2 text-xs mb-3">
+            {error}
+          </div>
+        )}
 
-        <div className="max-h-96 overflow-auto">
+        <div className="max-h-[28rem] overflow-auto">
           {products.length === 0 && !loading && !error && (
-            <div className="text-sm text-zinc-500">Nenhum produto cadastrado.</div>
+            <div className="text-sm text-slate-400 py-4 text-center">Nenhum produto cadastrado.</div>
           )}
           {products.map(prod => (
-            <EditableProductRow key={prod.id} product={prod} onUpdate={search} />
+            <EditableProductRow
+              key={prod.id}
+              product={prod}
+              onUpdate={search}
+              onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))}
+            />
           ))}
         </div>
       </Card>
@@ -459,6 +514,7 @@ export default function Products() {
         <NewProductModal
           onClose={() => setShowNew(false)}
           companyId={companyId || ''}
+          storeId={store?.id ?? null}
         />
       )}
     </div>
