@@ -118,7 +118,7 @@ export default function Financeiro() {
       {/* Header */}
       <div className="sticky top-0 bg-white border-b px-4 py-3 z-10 space-y-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">Financeiro</h1>
+          <h1 className="text-lg font-semibold text-navy">Financeiro</h1>
           <Link
             to="/contas-pagar"
             className="text-xs border rounded-xl px-3 py-1 hover:bg-zinc-50"
@@ -131,7 +131,7 @@ export default function Financeiro() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-colors ${tab === t ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-colors ${tab === t ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
             >
               {t === 'hoje' ? 'Hoje' : t === 'mes' ? `Mês (${mes}/${ano})` : 'Projeção'}
             </button>

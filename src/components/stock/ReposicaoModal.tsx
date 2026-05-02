@@ -456,7 +456,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-base font-semibold text-[#1E1B4B]">Reposição de Peças</h2>
+            <h2 className="text-base font-semibold text-navy">Reposição de Peças</h2>
             <p className="text-xs text-slate-500 mt-0.5">Acrescente saldo a produtos existentes ou cadastre novos.</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors">
@@ -472,7 +472,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
           <select
             value={selectedStoreId}
             onChange={e => setSelectedStoreId(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] cursor-pointer"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure cursor-pointer"
           >
             <option value="">Selecione a loja…</option>
             {stores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
@@ -486,7 +486,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
               key={t}
               onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium border-b-2 cursor-pointer transition-colors ${
-                tab === t ? 'border-[#1E40AF] text-[#1E40AF]' : 'border-transparent text-slate-500 hover:text-slate-700'
+                tab === t ? 'border-azure text-azure' : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
               {t === 'planilha' ? 'Por planilha Excel' : 'Manual (item a item)'}
@@ -504,7 +504,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
               {plStep === 'upload' && (
                 <>
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-2">
-                    <p className="text-sm font-medium text-[#1E1B4B]">Como usar</p>
+                    <p className="text-sm font-medium text-navy">Como usar</p>
                     <ol className="list-decimal list-inside space-y-1 text-xs text-slate-600">
                       <li>Baixe a planilha modelo com todos os produtos cadastrados.</li>
                       <li>Preencha a coluna <b>QTD_ENTRADA</b> com a quantidade a acrescentar.</li>
@@ -514,7 +514,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                     <button
                       onClick={downloadTemplate}
                       disabled={plLoading}
-                      className="mt-2 flex items-center gap-2 text-xs border border-[#1E40AF] text-[#1E40AF] rounded-xl px-3 py-2 hover:bg-blue-50 cursor-pointer transition-colors disabled:opacity-50"
+                      className="mt-2 flex items-center gap-2 text-xs border border-azure text-azure rounded-xl px-3 py-2 hover:bg-blue-50 cursor-pointer transition-colors disabled:opacity-50"
                     >
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4" />
@@ -524,8 +524,8 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium text-[#1E1B4B] mb-2">Subir planilha preenchida</p>
-                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl py-8 text-slate-400 text-sm cursor-pointer hover:border-[#1E40AF] hover:text-[#1E40AF] transition-colors">
+                    <p className="text-sm font-medium text-navy mb-2">Subir planilha preenchida</p>
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl py-8 text-slate-400 text-sm cursor-pointer hover:border-azure hover:text-azure transition-colors">
                       <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="mb-2">
                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3" />
                       </svg>
@@ -548,7 +548,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
               {plStep === 'preview' && (
                 <>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-[#1E1B4B]">Prévia da importação</p>
+                    <p className="text-sm font-medium text-navy">Prévia da importação</p>
                     <button
                       onClick={() => { setPlStep('upload'); setPlExisting([]); setPlNew([]); setPlSkipped([]) }}
                       className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer"
@@ -590,12 +590,12 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                             {plExisting.map((item, i) => (
                               <tr key={i} className="border-t border-slate-50">
                                 <td className="px-3 py-2">
-                                  <div className="font-medium text-[#1E1B4B]">{item.nome}</div>
+                                  <div className="font-medium text-navy">{item.nome}</div>
                                   {item.sku && <div className="text-slate-400">{item.sku}</div>}
                                 </td>
                                 <td className="px-3 py-2 text-right text-slate-500">{item.current_qty}</td>
                                 <td className="px-3 py-2 text-right text-emerald-600 font-medium">+{item.entrada}</td>
-                                <td className="px-3 py-2 text-right font-semibold text-[#1E1B4B]">{item.current_qty + item.entrada}</td>
+                                <td className="px-3 py-2 text-right font-semibold text-navy">{item.current_qty + item.entrada}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -621,7 +621,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                             {plNew.filter(n => n.errors.length === 0).map(item => (
                               <tr key={item._key} className="border-t border-slate-50">
                                 <td className="px-3 py-2">
-                                  <div className="font-medium text-[#1E1B4B]">{item.nome}</div>
+                                  <div className="font-medium text-navy">{item.nome}</div>
                                   {item.sku && <div className="text-slate-400">{item.sku}</div>}
                                   {item.categoria && <div className="text-slate-400">{item.categoria}</div>}
                                 </td>
@@ -654,7 +654,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                   {canImport && (
                     <button
                       onClick={runImport}
-                      className="w-full py-3 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-medium cursor-pointer transition-colors"
+                      className="w-full py-3 rounded-xl bg-primary hover:bg-azure-dark text-white text-sm font-medium cursor-pointer transition-colors"
                     >
                       Confirmar reposição
                     </button>
@@ -667,10 +667,10 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
 
               {plStep === 'importing' && (
                 <div className="space-y-3 py-4">
-                  <p className="text-sm text-center text-[#1E1B4B] font-medium">Importando…</p>
+                  <p className="text-sm text-center text-navy font-medium">Importando…</p>
                   <div className="w-full bg-slate-100 rounded-full h-2">
                     <div
-                      className="bg-[#1E40AF] h-2 rounded-full transition-all"
+                      className="bg-primary h-2 rounded-full transition-all"
                       style={{ width: `${plProgress.total > 0 ? (plProgress.done / plProgress.total) * 100 : 0}%` }}
                     />
                   </div>
@@ -685,10 +685,10 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                       <path stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-[#1E1B4B]">{plDoneMsg}</p>
+                  <p className="text-sm font-medium text-navy">{plDoneMsg}</p>
                   <button
                     onClick={onClose}
-                    className="text-xs text-[#1E40AF] underline cursor-pointer"
+                    className="text-xs text-azure underline cursor-pointer"
                   >
                     Fechar
                   </button>
@@ -711,7 +711,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                       value={manQ}
                       onChange={e => setManQ(e.target.value)}
                       placeholder="Nome ou SKU…"
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF]"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure"
                     />
                     {manSearching && (
                       <span className="absolute right-3 top-8 text-xs text-slate-400">buscando…</span>
@@ -724,7 +724,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                             onClick={() => addExistingProduct(p)}
                             className="w-full text-left px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
                           >
-                            <div className="text-sm font-medium text-[#1E1B4B]">{p.nome}</div>
+                            <div className="text-sm font-medium text-navy">{p.nome}</div>
                             <div className="text-xs text-slate-400">{p.sku || '—'} · {p.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
                           </button>
                         ))}
@@ -735,7 +735,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                   {/* Add new product form toggle */}
                   <button
                     onClick={() => setShowNewForm(f => !f)}
-                    className="flex items-center gap-1.5 text-xs text-[#1E40AF] cursor-pointer hover:text-[#1E3A8A] transition-colors"
+                    className="flex items-center gap-1.5 text-xs text-azure cursor-pointer hover:text-azure-dark transition-colors"
                   >
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
                       <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M12 4v16m8-8H4" />
@@ -745,43 +745,43 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
 
                   {showNewForm && (
                     <div className="border border-slate-100 rounded-xl p-4 space-y-3 bg-slate-50">
-                      <p className="text-xs font-medium text-[#1E1B4B]">Novo produto</p>
+                      <p className="text-xs font-medium text-navy">Novo produto</p>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="text-xs text-slate-500 mb-0.5 block">SKU</label>
                           <input value={newFormSku} onChange={e => setNewFormSku(e.target.value)} placeholder="Opcional"
-                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1E40AF]" />
+                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-azure" />
                         </div>
                         <div>
                           <label className="text-xs text-slate-500 mb-0.5 block">Nome *</label>
                           <input value={newFormNome} onChange={e => setNewFormNome(e.target.value)} placeholder="Nome do produto"
-                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1E40AF]" />
+                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-azure" />
                         </div>
                         <div>
                           <label className="text-xs text-slate-500 mb-0.5 block">Preço *</label>
                           <input value={newFormPreco} onChange={e => setNewFormPreco(e.target.value)} placeholder="0,00" type="number" min="0" step="0.01"
-                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1E40AF]" />
+                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-azure" />
                         </div>
                         <div>
                           <label className="text-xs text-slate-500 mb-0.5 block">Entrada *</label>
                           <input value={newFormEntrada} onChange={e => setNewFormEntrada(e.target.value)} type="number" min="1"
-                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1E40AF]" />
+                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-azure" />
                         </div>
                         <div>
                           <label className="text-xs text-slate-500 mb-0.5 block">Categoria</label>
                           <input value={newFormCategoria} onChange={e => setNewFormCategoria(e.target.value)} placeholder="Opcional"
-                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1E40AF]" />
+                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-azure" />
                         </div>
                         <div>
                           <label className="text-xs text-slate-500 mb-0.5 block">Marca</label>
                           <input value={newFormMarca} onChange={e => setNewFormMarca(e.target.value)} placeholder="Opcional"
-                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#1E40AF]" />
+                            className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-azure" />
                         </div>
                       </div>
                       <button
                         onClick={addNewProductFromForm}
                         disabled={!newFormNome.trim() || !Number(newFormPreco)}
-                        className="w-full py-2 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-medium cursor-pointer transition-colors disabled:opacity-40"
+                        className="w-full py-2 rounded-xl bg-primary hover:bg-azure-dark text-white text-xs font-medium cursor-pointer transition-colors disabled:opacity-40"
                       >
                         Adicionar à lista
                       </button>
@@ -796,7 +796,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                         <div key={item._key} className="flex items-center gap-3 border border-slate-100 rounded-xl px-3 py-2.5 bg-white">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-sm font-medium text-[#1E1B4B] truncate">{item.nome}</span>
+                              <span className="text-sm font-medium text-navy truncate">{item.nome}</span>
                               {item.isNew && (
                                 <span className="text-[10px] bg-blue-50 text-blue-600 rounded-full px-1.5 py-0.5 shrink-0">Novo</span>
                               )}
@@ -812,7 +812,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                               onClick={() => updateManEntrada(item._key, item.entrada - 1)}
                               className="w-7 h-7 rounded-lg border border-slate-200 text-slate-600 flex items-center justify-center cursor-pointer hover:bg-slate-50 text-base"
                             >−</button>
-                            <span className="w-8 text-center text-sm font-medium text-[#1E1B4B]">{item.entrada}</span>
+                            <span className="w-8 text-center text-sm font-medium text-navy">{item.entrada}</span>
                             <button
                               onClick={() => updateManEntrada(item._key, item.entrada + 1)}
                               className="w-7 h-7 rounded-lg border border-slate-200 text-slate-600 flex items-center justify-center cursor-pointer hover:bg-slate-50 text-base"
@@ -836,7 +836,7 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                   {manList.length > 0 && (
                     <button
                       onClick={confirmManual}
-                      className="w-full py-3 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-medium cursor-pointer transition-colors"
+                      className="w-full py-3 rounded-xl bg-primary hover:bg-azure-dark text-white text-sm font-medium cursor-pointer transition-colors"
                     >
                       Confirmar reposição ({manList.length} {manList.length === 1 ? 'item' : 'itens'})
                     </button>
@@ -846,10 +846,10 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
 
               {manImporting && (
                 <div className="space-y-3 py-4">
-                  <p className="text-sm text-center text-[#1E1B4B] font-medium">Importando…</p>
+                  <p className="text-sm text-center text-navy font-medium">Importando…</p>
                   <div className="w-full bg-slate-100 rounded-full h-2">
                     <div
-                      className="bg-[#1E40AF] h-2 rounded-full transition-all"
+                      className="bg-primary h-2 rounded-full transition-all"
                       style={{ width: `${manProgress.total > 0 ? (manProgress.done / manProgress.total) * 100 : 0}%` }}
                     />
                   </div>
@@ -864,10 +864,10 @@ export default function ReposicaoModal({ onClose, onDone, storeId, companyId }: 
                       <path stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-[#1E1B4B]">
+                  <p className="text-sm font-medium text-navy">
                     {manProgress.done} {manProgress.done === 1 ? 'item processado' : 'itens processados'} com sucesso.
                   </p>
-                  <button onClick={onClose} className="text-xs text-[#1E40AF] underline cursor-pointer">
+                  <button onClick={onClose} className="text-xs text-azure underline cursor-pointer">
                     Fechar
                   </button>
                 </div>

@@ -126,7 +126,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <FileText size={17} className="text-[#1E40AF]" />
+            <FileText size={17} className="text-azure" />
             <span className="text-sm font-semibold text-slate-800">Provedor Fiscal</span>
           </div>
           <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
@@ -147,14 +147,14 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                 <select
                   value={form.fiscal_provider}
                   onChange={e => set('fiscal_provider', e.target.value as Provider)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] bg-white"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure bg-white"
                 >
                   {(Object.keys(PROVIDER_LABELS) as Provider[]).map(p => (
                     <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
                   ))}
                 </select>
                 {PROVIDER_LINKS[form.fiscal_provider] && (
-                  <div className="text-xs text-[#1E40AF]">
+                  <div className="text-xs text-azure">
                     Documentação e cadastro:{' '}
                     <span className="underline">{PROVIDER_LINKS[form.fiscal_provider]}</span>
                   </div>
@@ -171,7 +171,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                         <button
                           key={a}
                           onClick={() => set('ambiente_fiscal', a)}
-                          className={`py-2.5 rounded-xl border-2 text-sm font-medium transition-colors cursor-pointer ${form.ambiente_fiscal === a ? 'border-[#1E40AF] bg-[#EFF6FF] text-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                          className={`py-2.5 rounded-xl border-2 text-sm font-medium transition-colors cursor-pointer ${form.ambiente_fiscal === a ? 'border-azure bg-navy-ghost text-azure' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}
                         >
                           {a === 'homologacao' ? 'Homologação' : 'Produção'}
                         </button>
@@ -192,7 +192,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                       value={form.fiscal_api_key}
                       onChange={e => set('fiscal_api_key', e.target.value)}
                       placeholder="Cole a chave gerada no painel do provedor"
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF]"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
                     />
                   </div>
 
@@ -205,7 +205,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                       onChange={e => set('cnpj_emitente', e.target.value.replace(/\D/g, '').slice(0, 14))}
                       placeholder="00000000000000"
                       maxLength={14}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] font-mono"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure font-mono"
                     />
                     <div className="text-xs text-slate-400">Apenas dígitos. CNPJ registrado na SEFAZ.</div>
                   </div>
@@ -223,7 +223,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                             value={form.csc_id}
                             onChange={e => set('csc_id', e.target.value)}
                             placeholder="000001"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF]"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
                           />
                         </div>
                         <div className="space-y-1.5">
@@ -233,7 +233,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                             value={form.csc_token}
                             onChange={e => set('csc_token', e.target.value)}
                             placeholder="Token do CSC"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF]"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
                           />
                         </div>
                       </div>
@@ -250,7 +250,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                         onChange={e => set('serie', e.target.value.slice(0, 3))}
                         placeholder="001"
                         maxLength={3}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] font-mono text-center"
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure font-mono text-center"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -260,7 +260,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                         min={1}
                         value={form.proxima_nfce}
                         onChange={e => set('proxima_nfce', Number(e.target.value))}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] font-mono text-center"
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure font-mono text-center"
                       />
                     </div>
                   </div>
@@ -304,7 +304,7 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
           <button
             onClick={handleSave}
             disabled={saving}
-            className="h-11 flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-50 text-white text-sm font-semibold cursor-pointer transition-colors"
+            className="h-11 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-50 text-white text-sm font-semibold cursor-pointer transition-colors"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : null}
             {saved ? 'Salvo!' : 'Salvar configurações'}

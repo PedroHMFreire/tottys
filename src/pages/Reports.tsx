@@ -12,6 +12,7 @@ import KPI from '@/ui/KPI'
 import { movingAverage, simpleForecast } from '@/domain/reports/predict'
 import { formatBRL } from '@/lib/currency'
 import { RefreshCw, TrendingUp, TrendingDown } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 type KpiRow = {
   company_id: string
@@ -130,6 +131,7 @@ const MEIO_LABEL: Record<string, string> = {
 export default function Reports() {
   const { store, company, setCompany } = useApp()
   const { role } = useRole()
+  const { isDark } = useTheme()
   const isOwner = role === 'OWNER'
   const [scope, setScope] = useState<'company' | 'global'>('company')
   const [companies, setCompanies] = useState<Array<{ id: string; nome: string }>>([])
@@ -562,7 +564,7 @@ export default function Reports() {
     <div className="pb-20">
 
       {/* ── Sticky filter bar ── */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-100 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-100 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-2.5 space-y-2">
 
           {/* Scope selector — OWNER only */}
@@ -573,7 +575,7 @@ export default function Reports() {
                   <button
                     key={s}
                     onClick={() => setScope(s)}
-                    className={`px-3 py-1.5 rounded-[10px] text-xs font-medium transition-all cursor-pointer ${scope === s ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`px-3 py-1.5 rounded-[10px] text-xs font-medium transition-all cursor-pointer ${scope === s ? 'bg-white text-azure shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   >
                     {s === 'company' ? 'Empresa' : 'Global'}
                   </button>
@@ -582,7 +584,7 @@ export default function Reports() {
 
               {scope === 'company' && (
                 <select
-                  className="flex-1 min-w-0 max-w-xs border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
+                  className="flex-1 min-w-0 max-w-xs border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-navy focus:outline-none focus:border-azure bg-white cursor-pointer"
                   value={company?.id || ''}
                   onChange={e => {
                     const selected = companies.find(c => c.id === e.target.value)
@@ -597,7 +599,7 @@ export default function Reports() {
               {scope === 'global' && (
                 <div className="flex gap-2 flex-1">
                   <select
-                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
+                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-navy focus:outline-none focus:border-azure bg-white cursor-pointer"
                     value={globalCompanyId}
                     onChange={e => { setGlobalCompanyId(e.target.value); setGlobalStoreId('') }}
                   >
@@ -605,7 +607,7 @@ export default function Reports() {
                     {companies.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                   </select>
                   <select
-                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
+                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-navy focus:outline-none focus:border-azure bg-white cursor-pointer"
                     value={globalStoreId}
                     onChange={e => setGlobalStoreId(e.target.value)}
                   >
@@ -637,12 +639,12 @@ export default function Reports() {
 
             <input
               type="date" value={from} onChange={e => setFrom(e.target.value)}
-              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-navy focus:outline-none focus:border-azure bg-white"
             />
             <span className="text-slate-300 text-xs">–</span>
             <input
               type="date" value={to} onChange={e => setTo(e.target.value)}
-              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+              className="border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-navy focus:outline-none focus:border-azure bg-white"
             />
 
             <label className="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
@@ -653,7 +655,7 @@ export default function Reports() {
             <button
               onClick={loadAll}
               disabled={!canLoad || loading}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1E40AF] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors hover:bg-[#1E3A8A]"
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors hover:bg-azure-dark"
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               {loading ? 'Buscando…' : 'Atualizar'}
@@ -678,7 +680,7 @@ export default function Reports() {
               key={t}
               onClick={() => setTab(t)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                tab === t ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                tab === t ? 'bg-white text-azure shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               {t === 'oper' ? 'Operação' : t === 'gestao' ? 'Gestão' : 'Moda'}
@@ -706,7 +708,7 @@ export default function Reports() {
                         <tr key={r.company_id} className={`border-b border-slate-50 ${i % 2 === 1 ? 'bg-slate-50/50' : ''}`}>
                           <td className="py-2.5 px-3 text-slate-800 font-medium">{r.nome}</td>
                           <td className="py-2.5 px-3 text-slate-500">{r.cupons}</td>
-                          <td className="py-2.5 px-3 text-right font-semibold text-[#1E40AF]">{formatBRL(r.fat)}</td>
+                          <td className="py-2.5 px-3 text-right font-semibold text-azure">{formatBRL(r.fat)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -731,7 +733,7 @@ export default function Reports() {
             ) : (
               <>
                 {/* Hero: Faturamento */}
-                <div className="bg-gradient-to-br from-[#1E40AF] to-[#1E3A8A] rounded-2xl p-5 text-white shadow-lg">
+                <div className="bg-gradient-to-br from-primary to-azure-dark rounded-2xl p-5 text-white shadow-lg">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-xs font-semibold uppercase tracking-widest opacity-60 mb-1">Faturamento do período</div>
@@ -829,14 +831,14 @@ export default function Reports() {
                         />
                         <YAxis hide />
                         <Tooltip
-                          cursor={{ fill: '#F1F5F9' }}
+                          cursor={{ fill: isDark ? '#334155' : '#F1F5F9' }}
                           content={({ active, payload }: any) => {
                             if (!active || !payload?.length) return null
                             const h = payload[0]?.payload?.h
                             return (
                               <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-lg text-xs">
                                 <div className="font-semibold text-slate-600 mb-0.5">{String(h).padStart(2, '0')}h</div>
-                                <div className="text-[#1E40AF] font-bold">{formatBRL(payload[0]?.value as number || 0)}</div>
+                                <div className="text-azure font-bold">{formatBRL(payload[0]?.value as number || 0)}</div>
                               </div>
                             )
                           }}
@@ -845,7 +847,7 @@ export default function Reports() {
                           {hoursAgg.arr.map((entry, i) => (
                             <Cell
                               key={i}
-                              fill={entry.total > 0 && entry.total === hoursAgg.max ? '#1E40AF' : '#BFDBFE'}
+                              fill={entry.total > 0 && entry.total === hoursAgg.max ? '#1E40AF' : isDark ? '#1E3A8A' : '#BFDBFE'}
                             />
                           ))}
                         </Bar>
@@ -915,7 +917,7 @@ export default function Reports() {
                           name === 'vendas' ? 'Vendas' : name === 'tendencia' ? 'Tendência (MM3)' : 'Previsão',
                         ]}
                         labelFormatter={(l: string) => new Date(l + 'T00:00:00').toLocaleDateString('pt-BR')}
-                        contentStyle={{ border: '1px solid #E2E8F0', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
+                        contentStyle={{ background: isDark ? '#1E293B' : '#fff', border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, borderRadius: '12px', fontSize: '12px', color: isDark ? '#E2E8F0' : '#334155', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                       />
                       <Area type="monotone" dataKey="vendas"    stroke="#93C5FD" strokeWidth={1.5} fill="url(#gradVendas)"   dot={false} connectNulls={false} name="vendas" />
                       <Area type="monotone" dataKey="tendencia" stroke="#1E40AF" strokeWidth={2}   fill="none"                dot={false} connectNulls={true}  name="tendencia" />
@@ -956,7 +958,7 @@ export default function Reports() {
                             </div>
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               <span className="text-xs text-slate-400">{r.qtde_total} un.</span>
-                              <span className="text-sm font-bold text-[#1E40AF]">{formatBRL(r.receita)}</span>
+                              <span className="text-sm font-bold text-azure">{formatBRL(r.receita)}</span>
                             </div>
                           </div>
                           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden ml-7">
@@ -1028,7 +1030,7 @@ export default function Reports() {
                   'Produtos com grade furada há mais de 15 dias podem indicar never-sell — avalie descontinuar',
                 ].map((tip, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-slate-600">
-                    <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-[#1E40AF] shrink-0" />
+                    <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                     {tip}
                   </div>
                 ))}
@@ -1061,7 +1063,7 @@ export default function Reports() {
                           </div>
                         </div>
                         <div className="text-right ml-2 shrink-0">
-                          <div className="font-semibold text-[#1E40AF] text-sm">{formatBRL(r.receita)}</div>
+                          <div className="font-semibold text-azure text-sm">{formatBRL(r.receita)}</div>
                           <div className="text-xs text-slate-400">{r.qtde_total} un.</div>
                         </div>
                       </div>
@@ -1094,7 +1096,7 @@ export default function Reports() {
                               <span className="ml-2 shrink-0 text-slate-500 text-xs">{formatBRL(r.receita)} · {r.qtde_total} un.</span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-[#1E40AF] rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                              <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
                         )
@@ -1126,7 +1128,7 @@ export default function Reports() {
                           <span className="truncate text-sm text-slate-700">{r.nome}</span>
                         </div>
                         <div className="text-right ml-2 shrink-0">
-                          <div className="font-semibold text-[#1E40AF] text-sm">{formatBRL(r.receita)}</div>
+                          <div className="font-semibold text-azure text-sm">{formatBRL(r.receita)}</div>
                           <div className="text-xs text-slate-400">{r.qtde_total} un.</div>
                         </div>
                       </div>
@@ -1184,7 +1186,7 @@ export default function Reports() {
                 <select
                   value={seller}
                   onChange={e => setSeller(e.target.value)}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white flex-1 cursor-pointer"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white flex-1 cursor-pointer"
                 >
                   <option value="">Todos os vendedores</option>
                   {sellerOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -1218,7 +1220,7 @@ export default function Reports() {
                             <td className="py-2.5 px-3 text-slate-500">{r.cupons}</td>
                             <td className="py-2.5 px-3 text-slate-500">{r.itens}</td>
                             <td className="py-2.5 px-3 text-slate-500">{formatBRL(r.ticket)}</td>
-                            <td className="py-2.5 px-3 text-right font-semibold text-[#1E40AF]">{formatBRL(r.fat)}</td>
+                            <td className="py-2.5 px-3 text-right font-semibold text-azure">{formatBRL(r.fat)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1282,7 +1284,7 @@ export default function Reports() {
                     key={f}
                     onClick={() => setSalesFilter(f)}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
-                      salesFilter === f ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      salesFilter === f ? 'bg-primary text-white border-azure' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     {f === 'all' ? 'Todas' : f === 'PAGA' ? 'Pagas' : f === 'PENDENTE' ? 'Pendentes' : 'Canceladas'}
@@ -1324,7 +1326,7 @@ export default function Reports() {
                         <div className="flex items-center gap-2 px-3 py-2.5">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-semibold text-[#1E1B4B]">{formatBRL(s.total)}</span>
+                              <span className="text-sm font-semibold text-navy">{formatBRL(s.total)}</span>
                               {s.desconto > 0 && <span className="text-xs text-slate-400">-{formatBRL(s.desconto)}</span>}
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor}`}>{s.status}</span>
                             </div>
@@ -1338,7 +1340,7 @@ export default function Reports() {
                           <div className="flex items-center gap-1 shrink-0">
                             <button
                               onClick={() => toggleSaleItems(s.id)}
-                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isExpanded ? 'text-[#1E40AF] bg-[#EFF6FF]' : 'text-slate-400 hover:text-[#1E40AF] hover:bg-[#EFF6FF]'}`}
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isExpanded ? 'text-azure bg-navy-ghost' : 'text-slate-400 hover:text-azure hover:bg-navy-ghost'}`}
                               title="Ver itens"
                             >
                               <svg width="13" height="13" fill="none" viewBox="0 0 24 24">

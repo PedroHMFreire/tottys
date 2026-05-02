@@ -146,7 +146,7 @@ export default function Promocoes() {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
       <div className="sticky top-0 bg-white border-b px-4 py-3 z-10 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[#1E1B4B]">Promoções</h1>
+        <h1 className="text-lg font-semibold text-navy">Promoções</h1>
         <Button onClick={openNew}>+ Nova</Button>
       </div>
 
@@ -211,18 +211,18 @@ export default function Promocoes() {
             <div className="space-y-3">
               <div>
                 <div className="text-xs text-zinc-500 mb-1">Nome *</div>
-                <input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} placeholder="Ex: Liquidação de Inverno" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full" />
+                <input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} placeholder="Ex: Liquidação de Inverno" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full" />
               </div>
               <div>
                 <div className="text-xs text-zinc-500 mb-1">Descrição</div>
-                <input value={form.descricao || ''} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))} placeholder="Opcional" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full" />
+                <input value={form.descricao || ''} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))} placeholder="Opcional" className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full" />
               </div>
 
               <div>
                 <div className="text-xs text-zinc-500 mb-2">Tipo de desconto</div>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setForm(p => ({ ...p, tipo: 'PERCENTUAL' }))} className={`py-2 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${form.tipo === 'PERCENTUAL' ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Percentual (%)</button>
-                  <button onClick={() => setForm(p => ({ ...p, tipo: 'VALOR_FIXO' }))} className={`py-2 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${form.tipo === 'VALOR_FIXO' ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Valor fixo (R$)</button>
+                  <button onClick={() => setForm(p => ({ ...p, tipo: 'PERCENTUAL' }))} className={`py-2 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${form.tipo === 'PERCENTUAL' ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Percentual (%)</button>
+                  <button onClick={() => setForm(p => ({ ...p, tipo: 'VALOR_FIXO' }))} className={`py-2 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${form.tipo === 'VALOR_FIXO' ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Valor fixo (R$)</button>
                 </div>
               </div>
 
@@ -233,7 +233,7 @@ export default function Promocoes() {
                     type="number" min={0} max={form.tipo === 'PERCENTUAL' ? 100 : undefined}
                     value={form.valor}
                     onChange={e => setForm(p => ({ ...p, valor: Number(e.target.value) }))}
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full"
                   />
                 </div>
                 <div>
@@ -242,14 +242,14 @@ export default function Promocoes() {
                     type="number" min={0}
                     value={form.valor_minimo_carrinho}
                     onChange={e => setForm(p => ({ ...p, valor_minimo_carrinho: Number(e.target.value) }))}
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="text-xs text-zinc-500 mb-1">Aplica em</div>
-                <select value={form.aplica_em} onChange={e => setForm(p => ({ ...p, aplica_em: e.target.value }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full">
+                <select value={form.aplica_em} onChange={e => setForm(p => ({ ...p, aplica_em: e.target.value }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full">
                   <option value="TUDO">Tudo (qualquer produto)</option>
                   <option value="COLECAO">Coleção específica</option>
                 </select>
@@ -258,7 +258,7 @@ export default function Promocoes() {
               {form.aplica_em === 'COLECAO' && (
                 <div>
                   <div className="text-xs text-zinc-500 mb-1">Coleção</div>
-                  <select value={form.collection_id || ''} onChange={e => setForm(p => ({ ...p, collection_id: e.target.value || null }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full">
+                  <select value={form.collection_id || ''} onChange={e => setForm(p => ({ ...p, collection_id: e.target.value || null }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full">
                     <option value="">Selecione...</option>
                     {collections.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                   </select>
@@ -267,7 +267,7 @@ export default function Promocoes() {
 
               <div>
                 <div className="text-xs text-zinc-500 mb-1">Requer perfil para aplicar</div>
-                <select value={form.requer_perfil} onChange={e => setForm(p => ({ ...p, requer_perfil: e.target.value }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full">
+                <select value={form.requer_perfil} onChange={e => setForm(p => ({ ...p, requer_perfil: e.target.value }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full">
                   <option value="TODOS">Todos (qualquer vendedor)</option>
                   <option value="GERENTE">Gerente ou superior</option>
                   <option value="ADMIN">Admin ou superior</option>
@@ -277,11 +277,11 @@ export default function Promocoes() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-xs text-zinc-500 mb-1">Início</div>
-                  <input type="date" value={form.data_inicio || ''} onChange={e => setForm(p => ({ ...p, data_inicio: e.target.value || null }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full" />
+                  <input type="date" value={form.data_inicio || ''} onChange={e => setForm(p => ({ ...p, data_inicio: e.target.value || null }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full" />
                 </div>
                 <div>
                   <div className="text-xs text-zinc-500 mb-1">Fim</div>
-                  <input type="date" value={form.data_fim || ''} onChange={e => setForm(p => ({ ...p, data_fim: e.target.value || null }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full" />
+                  <input type="date" value={form.data_fim || ''} onChange={e => setForm(p => ({ ...p, data_fim: e.target.value || null }))} className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full" />
                 </div>
               </div>
 

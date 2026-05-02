@@ -94,11 +94,11 @@ export default function NPS() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
 
         {/* Header */}
-        <div className="bg-[#1E40AF] px-6 py-5">
+        <div className="bg-primary px-6 py-5">
           <p className="text-white font-bold text-lg">{companyNome || 'Tottys'}</p>
           <p className="text-blue-200 text-sm mt-0.5">Pesquisa de satisfação</p>
         </div>
@@ -179,7 +179,7 @@ export default function NPS() {
                     onChange={e => setComentario(e.target.value)}
                     rows={3}
                     placeholder="Conte-nos o que achou..."
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] transition-colors resize-none"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure transition-colors resize-none"
                   />
                 </div>
               )}
@@ -187,7 +187,7 @@ export default function NPS() {
               <button
                 onClick={handleSubmit}
                 disabled={nota === null || submitting}
-                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-40 text-white text-sm font-semibold cursor-pointer transition-colors"
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-40 text-white text-sm font-semibold cursor-pointer transition-colors"
               >
                 {submitting ? <Loader2 size={15} className="animate-spin" /> : null}
                 {submitting ? 'Enviando…' : 'Enviar avaliação'}

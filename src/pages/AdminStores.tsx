@@ -142,7 +142,7 @@ export default function AdminStores() {
         </div>
         <button
           onClick={() => { setShowNew(true); setError(null); setMsg(null) }}
-          className="flex items-center gap-1.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 bg-primary hover:bg-azure-dark text-white text-sm font-medium px-3 py-2 rounded-xl transition-colors cursor-pointer"
         >
           <Plus size={14} strokeWidth={2.5} />
           Nova loja
@@ -175,7 +175,7 @@ export default function AdminStores() {
             <p className="text-sm">Nenhuma loja cadastrada.</p>
             <button
               onClick={() => setShowNew(true)}
-              className="mt-1 text-xs text-[#1E40AF] hover:underline cursor-pointer"
+              className="mt-1 text-xs text-azure hover:underline cursor-pointer"
             >
               Criar primeira loja →
             </button>
@@ -192,7 +192,7 @@ export default function AdminStores() {
                         <label className="text-xs text-slate-400 mb-1 block">Nome *</label>
                         <input
                           autoFocus
-                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF] transition-colors"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-azure transition-colors"
                           value={editMap[s.id]?.nome || ''}
                           onChange={e => setEditMap(p => ({ ...p, [s.id]: { ...p[s.id], nome: e.target.value } }))}
                         />
@@ -200,7 +200,7 @@ export default function AdminStores() {
                       <div>
                         <label className="text-xs text-slate-400 mb-1 block">Estado (UF) *</label>
                         <select
-                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF] bg-white transition-colors cursor-pointer"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-azure bg-white transition-colors cursor-pointer"
                           value={editMap[s.id]?.uf || ''}
                           onChange={e => setEditMap(p => ({ ...p, [s.id]: { ...p[s.id], uf: e.target.value } }))}
                         >
@@ -211,7 +211,7 @@ export default function AdminStores() {
                       <div>
                         <label className="text-xs text-slate-400 mb-1 block">Ambiente</label>
                         <select
-                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF] bg-white transition-colors cursor-pointer"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-azure bg-white transition-colors cursor-pointer"
                           value={editMap[s.id]?.ambiente || 'homologacao'}
                           onChange={e => setEditMap(p => ({ ...p, [s.id]: { ...p[s.id], ambiente: e.target.value } }))}
                         >
@@ -229,7 +229,7 @@ export default function AdminStores() {
                       </button>
                       <button
                         onClick={() => saveEdit(s.id)}
-                        className="flex items-center gap-1 text-xs font-medium text-white bg-[#1E40AF] hover:bg-[#1E3A8A] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                        className="flex items-center gap-1 text-xs font-medium text-white bg-primary hover:bg-azure-dark px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                       >
                         <Check size={12} />
                         Salvar
@@ -240,8 +240,8 @@ export default function AdminStores() {
                   /* ── View row ── */
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center shrink-0">
-                        <Store size={14} className="text-[#1E40AF]" strokeWidth={1.75} />
+                      <div className="w-8 h-8 rounded-lg bg-navy-ghost border border-blue-200 flex items-center justify-center shrink-0">
+                        <Store size={14} className="text-azure" strokeWidth={1.75} />
                       </div>
                       <div className="min-w-0">
                         <div className="text-sm font-medium text-slate-800 truncate">{s.nome}</div>
@@ -273,7 +273,7 @@ export default function AdminStores() {
                           <button
                             onClick={() => startEdit(s)}
                             aria-label="Editar loja"
-                            className="p-1.5 text-slate-400 hover:text-[#1E40AF] hover:bg-[#EFF6FF] rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-azure hover:bg-navy-ghost rounded-lg transition-colors cursor-pointer"
                           >
                             <Pencil size={14} strokeWidth={1.75} />
                           </button>
@@ -325,7 +325,7 @@ export default function AdminStores() {
                 <label className="text-xs font-medium text-slate-500 mb-1.5 block">Nome *</label>
                 <input
                   autoFocus
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure transition-colors"
                   value={nome}
                   onChange={e => setNome(e.target.value)}
                   placeholder="Ex.: Loja Centro"
@@ -337,7 +337,7 @@ export default function AdminStores() {
                 <div>
                   <label className="text-xs font-medium text-slate-500 mb-1.5 block">Estado (UF) *</label>
                   <select
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] bg-white transition-colors cursor-pointer"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure bg-white transition-colors cursor-pointer"
                     value={uf}
                     onChange={e => setUf(e.target.value)}
                   >
@@ -348,7 +348,7 @@ export default function AdminStores() {
                 <div>
                   <label className="text-xs font-medium text-slate-500 mb-1.5 block">Ambiente</label>
                   <select
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] bg-white transition-colors cursor-pointer"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure bg-white transition-colors cursor-pointer"
                     value={ambiente}
                     onChange={e => setAmbiente(e.target.value as 'homologacao' | 'producao')}
                   >
@@ -369,7 +369,7 @@ export default function AdminStores() {
               <button
                 onClick={createStore}
                 disabled={saving}
-                className="flex-1 py-2.5 text-sm font-medium text-white bg-[#1E40AF] hover:bg-[#1E3A8A] rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-primary hover:bg-azure-dark rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Salvando…' : 'Criar loja'}
               </button>

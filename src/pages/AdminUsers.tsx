@@ -328,7 +328,7 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">Usuários & Acessos</h1>
+          <h1 className="text-lg font-semibold text-navy">Usuários & Acessos</h1>
           <p className="text-xs text-slate-400 mt-0.5">
             {company?.nome ?? 'Carregando empresa…'} · {list.length} usuário{list.length !== 1 ? 's' : ''}
           </p>
@@ -417,7 +417,7 @@ export default function AdminUsers() {
                               value={userRole}
                               onChange={e => saveRole(u.id, e.target.value as RoleDB)}
                               disabled={!callerIsAdmin || userRole === 'OWNER'}
-                              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#1E40AF] disabled:opacity-50 cursor-pointer"
+                              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-azure disabled:opacity-50 cursor-pointer"
                             >
                               {assignableRoles().map(r => (
                                 <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -435,7 +435,7 @@ export default function AdminUsers() {
                               <select
                                 value={u.cargo ?? 'VENDEDOR'}
                                 onChange={e => saveCargo(u.id, e.target.value as Cargo)}
-                                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#1E40AF] cursor-pointer"
+                                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-azure cursor-pointer"
                               >
                                 {(Object.keys(CARGO_LABELS) as Cargo[]).map(c => (
                                   <option key={c} value={c}>{CARGO_LABELS[c]}</option>
@@ -500,7 +500,7 @@ export default function AdminUsers() {
                                       <label
                                         key={code}
                                         className={`flex items-center gap-2.5 rounded-lg px-3 py-2 cursor-pointer transition-colors ${
-                                          isActive ? 'bg-[#EFF6FF]' : 'bg-slate-50 hover:bg-slate-100'
+                                          isActive ? 'bg-navy-ghost' : 'bg-slate-50 hover:bg-slate-100'
                                         }`}
                                       >
                                         <input
@@ -508,9 +508,9 @@ export default function AdminUsers() {
                                           checked={isActive}
                                           disabled={isDefault || !callerIsAdmin}
                                           onChange={e => toggleArea(u.id, code, e.target.checked)}
-                                          className="accent-[#1E40AF]"
+                                          className="accent-azure"
                                         />
-                                        <span className={`text-xs ${isActive ? 'text-[#1E40AF] font-medium' : 'text-slate-500'}`}>
+                                        <span className={`text-xs ${isActive ? 'text-azure font-medium' : 'text-slate-500'}`}>
                                           {AREA_LABELS[code]}
                                         </span>
                                         {isDefault && (
@@ -545,7 +545,7 @@ export default function AdminUsers() {
                                     type="checkbox"
                                     checked={storeSet.has(st.id)}
                                     onChange={e => toggleStore(u.id, st.id, e.target.checked)}
-                                    className="accent-[#1E40AF]"
+                                    className="accent-azure"
                                   />
                                   {st.nome}
                                 </label>
@@ -585,7 +585,7 @@ export default function AdminUsers() {
                   value={nEmail}
                   onChange={e => setNEmail(e.target.value)}
                   placeholder="colaborador@empresa.com"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure transition-colors"
                   autoFocus
                 />
               </div>
@@ -596,7 +596,7 @@ export default function AdminUsers() {
                   value={nName}
                   onChange={e => setNName(e.target.value)}
                   placeholder="Nome completo (opcional)"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure transition-colors"
                 />
               </div>
 
@@ -606,7 +606,7 @@ export default function AdminUsers() {
                   <select
                     value={nRole}
                     onChange={e => setNRole(e.target.value as RoleDB)}
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF] cursor-pointer"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-azure cursor-pointer"
                   >
                     {assignableRoles().map(r => (
                       <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -619,7 +619,7 @@ export default function AdminUsers() {
                     <select
                       value={nCargo}
                       onChange={e => setNCargo(e.target.value as Cargo)}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF] cursor-pointer"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-azure cursor-pointer"
                     >
                       {(Object.keys(CARGO_LABELS) as Cargo[]).map(c => (
                         <option key={c} value={c}>{CARGO_LABELS[c]}</option>
@@ -660,7 +660,7 @@ export default function AdminUsers() {
                           type="checkbox"
                           checked={nAreas.includes(code)}
                           onChange={() => setNAreas(prev => prev.includes(code) ? prev.filter(a => a !== code) : [...prev, code])}
-                          className="accent-[#1E40AF]"
+                          className="accent-azure"
                         />
                         {AREA_LABELS[code]}
                       </label>
@@ -682,7 +682,7 @@ export default function AdminUsers() {
               <button
                 onClick={createUser}
                 disabled={saving || !nEmail.trim()}
-                className="h-11 flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-50 text-white text-sm font-semibold cursor-pointer transition-colors"
+                className="h-11 flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-50 text-white text-sm font-semibold cursor-pointer transition-colors"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : null}
                 {saving ? 'Enviando…' : 'Enviar convite'}

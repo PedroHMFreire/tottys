@@ -38,7 +38,7 @@ export default function StockAdmin() {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[#1E1B4B]">Estoque (Admin)</h1>
+        <h1 className="text-lg font-semibold text-navy">Estoque (Admin)</h1>
       </div>
 
       {/* Ações rápidas: agora o ADM > Estoque também importa/cadastra produtos */}

@@ -16,6 +16,7 @@ import CustomerPDV, { type SelectedCustomer } from '@/components/pdv/CustomerPDV
 import type { ProductVariant } from '@/domain/types'
 import type { DescontoAplicado } from '@/components/pdv/DescontoModal'
 import { Search, ScanLine, Trash2, X, Loader2, ShoppingBag, ChevronDown, AlertCircle } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // Lazy-load heavy modals — não carregam até serem abertos (#8)
 const PayModal           = lazy(() => import('@/components/PayModal'))
@@ -558,7 +559,7 @@ export default function Sell() {
   /* UI                                                            */
   /* ============================================================ */
   return (
-    <div className="pb-24 md:pb-0 bg-[#F8FAFC] min-h-screen">
+    <div className="pb-24 md:pb-0 bg-surface-2 min-h-screen">
       <Toast toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
 
       {/* Header */}
@@ -566,23 +567,25 @@ export default function Sell() {
         <div className="px-4 py-3 max-w-5xl mx-auto flex items-center justify-between">
           <div>
             {isAdmin && (
-              <Link to="/adm" className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-[#1E40AF] transition-colors mb-0.5 cursor-pointer">
+              <Link to="/adm" className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-azure transition-colors mb-0.5 cursor-pointer">
                 <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6"/></svg>
                 Retaguarda
               </Link>
             )}
             <h1 className="flex items-center gap-2 text-sm font-semibold text-slate-800 tracking-tight">
-              <span className="w-0.5 h-4 bg-[#1E40AF] rounded-full inline-block flex-shrink-0" />
+              <span className="w-0.5 h-4 bg-primary rounded-full inline-block flex-shrink-0" />
               Tottys PDV
             </h1>
           </div>
 
-          {/* Store selector */}
+          {/* Store selector + theme toggle */}
+          <div className="flex items-center gap-2">
+          <ThemeToggle size="sm" />
           <div ref={dropdownRef} className="relative">
             <button
               aria-label="Selecionar loja"
               aria-expanded={showDropdown}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure shadow-sm"
               onClick={() => setShowDropdown(v => !v)}
             >
               <span className="max-w-[130px] truncate">{store?.nome?.trim() || 'Selecionar loja'}</span>
@@ -597,7 +600,7 @@ export default function Sell() {
                   storeList.map(loja => (
                     <button
                       key={loja.id}
-                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 cursor-pointer transition-colors ${store?.id === loja.id ? 'font-semibold text-[#1E40AF]' : 'text-slate-700'}`}
+                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 cursor-pointer transition-colors ${store?.id === loja.id ? 'font-semibold text-azure' : 'text-slate-700'}`}
                       onClick={() => {
                         setShowDropdown(false)
                         setStore(loja)
@@ -610,6 +613,7 @@ export default function Sell() {
                 )}
               </div>
             )}
+          </div>
           </div>
         </div>
       </header>
@@ -668,7 +672,7 @@ export default function Sell() {
                     }
                   } else if (e.key === 'Enter') { search() }
                 }}
-                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-[#F8FAFC]"
+                className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-surface-2"
                 placeholder="SKU, nome ou EAN…"
                 autoComplete="off"
               />
@@ -682,7 +686,7 @@ export default function Sell() {
                     >
                       <span className="font-medium truncate text-sm text-slate-800">{highlightTerm(s.nome, q)}</span>
                       <span className="text-xs text-slate-500 flex-shrink-0">{highlightTerm(s.sku, q)}</span>
-                      <span className="text-sm font-semibold text-[#1E40AF] flex-shrink-0">{formatBRL(s.preco || 0)}</span>
+                      <span className="text-sm font-semibold text-azure flex-shrink-0">{formatBRL(s.preco || 0)}</span>
                     </div>
                   ))}
                 </div>
@@ -692,7 +696,7 @@ export default function Sell() {
               <button
                 onClick={() => search()}
                 disabled={loadingSearch}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#1E40AF] text-white text-sm font-medium hover:bg-[#1E3A8A] disabled:opacity-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-azure-dark disabled:opacity-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure"
               >
                 {loadingSearch ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
                 Buscar
@@ -700,7 +704,7 @@ export default function Sell() {
               <button
                 onClick={() => setShowScanner(true)}
                 aria-label="Escanear código de barras"
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure"
               >
                 <ScanLine size={14} />
                 Escanear
@@ -725,10 +729,10 @@ export default function Sell() {
                         <div className="text-xs text-slate-500 truncate">{p.sku}{p.barcode ? ` · ${p.barcode}` : ''}</div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-sm font-semibold text-[#1E40AF]">{formatBRL(p.preco || 0)}</span>
+                        <span className="text-sm font-semibold text-azure">{formatBRL(p.preco || 0)}</span>
                         <button
                           onClick={e => { e.stopPropagation(); addFromCatalog(p) }}
-                          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-[#1E40AF] text-white text-xs font-medium hover:bg-[#1E3A8A] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-primary text-white text-xs font-medium hover:bg-azure-dark transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure"
                         >
                           + Add
                         </button>
@@ -768,7 +772,7 @@ export default function Sell() {
           )}
 
           {/* Cart */}
-          <div className={`rounded-2xl border bg-white p-3 shadow-sm transition-all duration-200 ${cartFlash ? 'border-[#1E40AF] shadow-[0_0_0_3px_rgba(30,64,175,0.10)]' : 'border-slate-100'}`}>
+          <div className={`rounded-2xl border bg-white p-3 shadow-sm transition-all duration-200 ${cartFlash ? 'border-azure shadow-[0_0_0_3px_rgba(30,64,175,0.10)]' : 'border-slate-100'}`}>
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Carrinho {cart.length > 0 && <span className="text-slate-700">({cart.length})</span>}
@@ -806,7 +810,7 @@ export default function Sell() {
                         <div className="text-xs text-slate-500 mt-0.5">
                           {item.sku}{item.tamanho && item.cor ? ` · ${item.tamanho}/${item.cor}` : ''}{item.origin === 'MOCK' ? ' · teste' : ''}
                         </div>
-                        <div className="text-xs font-semibold text-[#1E40AF] mt-0.5">{formatBRL(item.preco * item.qtde)}</div>
+                        <div className="text-xs font-semibold text-azure mt-0.5">{formatBRL(item.preco * item.qtde)}</div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
@@ -819,20 +823,20 @@ export default function Sell() {
                         <button
                           onClick={() => dec(idx)}
                           aria-label="Diminuir quantidade"
-                          className="w-11 h-11 flex items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors cursor-pointer text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors cursor-pointer text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure"
                         >−</button>
                         <span className="w-7 text-center text-sm font-semibold text-slate-800 tabular-nums">{item.qtde}</span>
                         <button
                           onClick={() => inc(idx)}
                           aria-label="Aumentar quantidade"
-                          className="w-11 h-11 flex items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors cursor-pointer text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors cursor-pointer text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure"
                         >+</button>
                       </div>
                     </div>
                   ))}
                 </div>
                 {cart.length >= 4 && (
-                  <div className="absolute bottom-0 left-0 right-1 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none rounded-b-xl" />
+                  <div className="absolute bottom-0 left-0 right-1 h-8 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none rounded-b-xl" />
                 )}
               </div>
             )}
@@ -876,7 +880,7 @@ export default function Sell() {
                 setShowPay(true)
               }}
               disabled={cart.length === 0 || loadingRules || !store?.id || finalizing}
-              className="w-full h-14 bg-[#1E40AF] hover:bg-[#1E3A8A] active:bg-[#1E3282] disabled:opacity-40 disabled:cursor-not-allowed text-white text-base font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer select-none shadow-lg shadow-[#1E40AF]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1E40AF]"
+              className="w-full h-14 bg-primary hover:bg-azure-dark active:bg-[#1E3282] disabled:opacity-40 disabled:cursor-not-allowed text-white text-base font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer select-none shadow-lg shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-azure"
             >
               {finalizing
                 ? <><Loader2 size={17} className="animate-spin" /><span>Finalizando…</span></>
@@ -891,14 +895,14 @@ export default function Sell() {
                   setShowCrediario(true)
                 }}
                 disabled={cart.length === 0 || !store?.id || !company?.id}
-                className="h-11 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF]"
+                className="h-11 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure"
               >
                 Crediário
               </button>
               <button
                 onClick={() => setShowDesconto(true)}
                 disabled={cart.length === 0 || !company?.id}
-                className={`h-11 rounded-xl border text-sm font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] ${desconto ? 'border-[#1E40AF] bg-[#EFF6FF] text-[#1E40AF]' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+                className={`h-11 rounded-xl border text-sm font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure ${desconto ? 'border-azure bg-navy-ghost text-azure' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
               >
                 {desconto ? (desconto.tipo === 'PERCENTUAL' ? `${desconto.valor}%` : formatBRL(desconto.valor)) : 'Desconto'}
               </button>
@@ -948,7 +952,7 @@ export default function Sell() {
                 {loadingHistory ? (
                   <div className="h-6 bg-slate-100 rounded-lg animate-pulse mt-1 mx-2" />
                 ) : (
-                  <div className="text-base font-semibold text-[#1E40AF] tabular-nums mt-0.5 font-mono">{kpi.value}</div>
+                  <div className="text-base font-semibold text-azure tabular-nums mt-0.5 font-mono">{kpi.value}</div>
                 )}
               </div>
             ))}
@@ -976,11 +980,11 @@ export default function Sell() {
                       <div className="text-xs text-slate-500">{new Date(sale.created_at).toLocaleString('pt-BR')} · {sale.status}</div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-sm font-semibold text-[#1E40AF]">{formatBRL(sale.total || 0)}</span>
+                      <span className="text-sm font-semibold text-azure">{formatBRL(sale.total || 0)}</span>
                       <button
                         onClick={() => openSaleReceipt(sale)}
                         disabled={loadingReceiptId === sale.id}
-                        className="min-h-[44px] px-3 rounded-lg border border-slate-200 text-xs text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E40AF] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        className="min-h-[44px] px-3 rounded-lg border border-slate-200 text-xs text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azure disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                       >
                         {loadingReceiptId === sale.id ? <Loader2 size={12} className="animate-spin" /> : null}
                         Ver

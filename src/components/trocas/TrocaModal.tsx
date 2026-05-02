@@ -161,9 +161,9 @@ export default function TrocaModal({ companyId, storeId, onSuccess, onClose }: P
 
         {/* Stepper */}
         <div className="flex items-center gap-2 text-xs">
-          <span className={`px-2 py-1 rounded-full ${step === 'itens' ? 'bg-[#1E40AF] text-white' : 'bg-zinc-100 text-slate-400'}`}>1. Itens</span>
+          <span className={`px-2 py-1 rounded-full ${step === 'itens' ? 'bg-primary text-white' : 'bg-zinc-100 text-slate-400'}`}>1. Itens</span>
           <span className="text-slate-400">→</span>
-          <span className={`px-2 py-1 rounded-full ${step === 'finalizacao' ? 'bg-[#1E40AF] text-white' : 'bg-zinc-100 text-slate-400'}`}>2. Finalizar</span>
+          <span className={`px-2 py-1 rounded-full ${step === 'finalizacao' ? 'bg-primary text-white' : 'bg-zinc-100 text-slate-400'}`}>2. Finalizar</span>
         </div>
 
         {/* STEP 1: Itens */}
@@ -176,7 +176,7 @@ export default function TrocaModal({ companyId, storeId, onSuccess, onClose }: P
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 placeholder="Nome ou SKU..."
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
               />
               {loadingSearch && <div className="text-xs text-slate-400">Buscando…</div>}
               {results.map(r => (
@@ -272,7 +272,7 @@ export default function TrocaModal({ companyId, storeId, onSuccess, onClose }: P
             {/* Resumo */}
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm space-y-1">
               <div className="text-slate-400 text-xs">{items.length} item(s)</div>
-              <div className="text-xl font-semibold text-[#1E1B4B]">{formatBRL(valorTotal)}</div>
+              <div className="text-xl font-semibold text-navy">{formatBRL(valorTotal)}</div>
             </div>
 
             {/* Tipo */}
@@ -283,7 +283,7 @@ export default function TrocaModal({ companyId, storeId, onSuccess, onClose }: P
                   <button
                     key={t}
                     onClick={() => setTipo(t)}
-                    className={`py-2 rounded-xl border text-sm font-medium ${tipo === t ? 'bg-[#1E40AF] text-white' : 'border-zinc-200 text-slate-600'}`}
+                    className={`py-2 rounded-xl border text-sm font-medium ${tipo === t ? 'bg-primary text-white' : 'border-zinc-200 text-slate-600'}`}
                   >
                     {t === 'TROCA' ? 'Troca' : 'Devolução'}
                   </button>
@@ -303,7 +303,7 @@ export default function TrocaModal({ companyId, storeId, onSuccess, onClose }: P
                 </button>
                 <button
                   onClick={() => { setForma('DINHEIRO'); setCustomer(null) }}
-                  className={`py-2 rounded-xl border text-sm font-medium ${forma === 'DINHEIRO' ? 'bg-[#1E40AF] text-white' : 'border-zinc-200 text-slate-600'}`}
+                  className={`py-2 rounded-xl border text-sm font-medium ${forma === 'DINHEIRO' ? 'bg-primary text-white' : 'border-zinc-200 text-slate-600'}`}
                 >
                   Dinheiro
                 </button>
@@ -347,7 +347,7 @@ export default function TrocaModal({ companyId, storeId, onSuccess, onClose }: P
                 onChange={e => setObs(e.target.value)}
                 rows={2}
                 placeholder="Ex: produto com etiqueta, nota fiscal nº..."
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white resize-none"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white resize-none"
               />
             </div>
 

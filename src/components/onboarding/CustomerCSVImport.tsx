@@ -265,9 +265,9 @@ export default function CustomerCSVImport({ companyId, onDone, onSkip }: Props) 
 
   if (step === 'importing') return (
     <div className="space-y-4 text-center py-4">
-      <div className="font-semibold text-[#1E1B4B]">Importando clientes…</div>
+      <div className="font-semibold text-navy">Importando clientes…</div>
       <div className="w-full bg-slate-100 rounded-full h-2">
-        <div className="bg-[#1E40AF] h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
+        <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
       </div>
       <div className="text-sm text-slate-400">{progress}% concluído</div>
     </div>

@@ -63,7 +63,7 @@ export default function CustomerSelector({ companyId, onSelect, onClose }: Props
           onChange={e => setQ(e.target.value)}
           autoFocus
           placeholder="Buscar por nome ou CPF..."
-          className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+          className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
         />
         <button onClick={onClose} className="text-slate-400 text-sm">cancelar</button>
       </div>

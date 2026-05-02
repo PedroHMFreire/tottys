@@ -59,7 +59,7 @@ export default function PagamentoModal({ parcela, clienteNome, onPago, onClose }
           <input
             value={valorPago}
             onChange={e => setValorPago(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-lg font-semibold text-center text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-lg font-semibold text-center text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
             placeholder="0,00"
           />
         </div>

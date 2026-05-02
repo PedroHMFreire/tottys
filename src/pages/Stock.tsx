@@ -89,7 +89,7 @@ function KpiCard({
   const valueColor =
     highlight === 'danger' ? 'text-rose-500' :
     highlight === 'warn'   ? 'text-amber-500' :
-    'text-[#1E1B4B]'
+    'text-navy'
   const border =
     highlight === 'danger' && value > 0
       ? active ? 'border-rose-300 bg-rose-50' : 'border-slate-200 hover:border-rose-200 hover:bg-rose-50'
@@ -504,14 +504,14 @@ export default function Stock() {
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-lg font-semibold text-[#1E1B4B]">Estoque</h1>
+        <h1 className="text-lg font-semibold text-navy">Estoque</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <span>Crítico abaixo de</span>
             <input
               type="number" min={1} max={99} value={criticalThreshold}
               onChange={e => setCriticalThreshold(Math.max(1, Number(e.target.value)))}
-              className="w-12 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF]"
+              className="w-12 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center text-navy focus:outline-none focus:border-azure"
             />
             <span>un.</span>
           </div>
@@ -540,7 +540,7 @@ export default function Stock() {
         <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => setShowReposicao(true)}
-            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-medium cursor-pointer transition-colors"
+            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary hover:bg-azure-dark text-white text-sm font-medium cursor-pointer transition-colors"
           >
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24">
               <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M4 12l4-4m-4 4l4 4M20 12l-4-4m4 4l-4 4"/>
@@ -587,17 +587,17 @@ export default function Stock() {
           <div className="space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <button
-                className={`rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${scope === 'company' ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                className={`rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${scope === 'company' ? 'bg-primary text-white border-azure' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
                 onClick={() => setScope('company')}
               >Por empresa</button>
               <button
-                className={`rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${scope === 'global' ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                className={`rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${scope === 'global' ? 'bg-primary text-white border-azure' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
                 onClick={() => setScope('global')}
               >Global</button>
             </div>
             {scope === 'company' && (
               <select
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
                 value={company?.id || ''}
                 onChange={e => { const c = companies.find(x => x.id === e.target.value); if (c) setCompany(c as any) }}
               >
@@ -608,7 +608,7 @@ export default function Stock() {
             {scope === 'global' && (
               <div className="grid grid-cols-2 gap-2">
                 <select
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white"
                   value={globalCompanyId}
                   onChange={e => { setGlobalCompanyId(e.target.value); setGlobalStoreId('') }}
                 >
@@ -616,7 +616,7 @@ export default function Stock() {
                   {companies.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
                 <select
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white"
                   value={globalStoreId} onChange={e => setGlobalStoreId(e.target.value)}
                 >
                   <option value="">Todas as lojas</option>
@@ -643,14 +643,14 @@ export default function Stock() {
               value={q}
               onChange={e => setQ(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && search(0)}
-              className="w-full pl-9 pr-3 border border-slate-200 rounded-xl py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] bg-white"
+              className="w-full pl-9 pr-3 border border-slate-200 rounded-xl py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure bg-white"
               placeholder="SKU, nome ou EAN…"
             />
           </div>
           <button
             onClick={() => search(0)}
             disabled={loading}
-            className="px-4 py-2.5 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-50 text-white text-sm font-medium cursor-pointer transition-colors"
+            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-50 text-white text-sm font-medium cursor-pointer transition-colors"
           >
             {loading ? '…' : 'Buscar'}
           </button>
@@ -659,7 +659,7 @@ export default function Stock() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <select
             value={filterCategoria} onChange={e => setFilterCategoria(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure bg-white"
           >
             <option value="">Categoria</option>
             {categorias.map(c => <option key={c} value={c}>{c}</option>)}
@@ -667,7 +667,7 @@ export default function Stock() {
 
           <select
             value={filterMarca} onChange={e => setFilterMarca(e.target.value)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure bg-white"
           >
             <option value="">Marca</option>
             {marcas.map(m => <option key={m} value={m}>{m}</option>)}
@@ -675,7 +675,7 @@ export default function Stock() {
 
           <select
             value={filterStock} onChange={e => setFilterStock(e.target.value as StockFilter)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure bg-white"
           >
             <option value="all">Todos os saldos</option>
             <option value="in-stock">Em estoque</option>
@@ -686,7 +686,7 @@ export default function Stock() {
 
           <select
             value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)}
-            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+            className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure bg-white"
           >
             <option value="name-asc">Nome A→Z</option>
             <option value="name-desc">Nome Z→A</option>
@@ -700,7 +700,7 @@ export default function Stock() {
           {scope === 'company' && stores.length > 1 && (
             <select
               value={filterStoreId} onChange={e => setFilterStoreId(e.target.value)}
-              className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white"
+              className="border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:border-azure bg-white"
             >
               <option value="">Todas as lojas</option>
               {stores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
@@ -712,13 +712,13 @@ export default function Stock() {
               <span className="text-xs text-slate-500">Saldo entre</span>
               <input
                 type="number" min={0} value={filterStockMin} onChange={e => setFilterStockMin(e.target.value)}
-                className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center focus:outline-none focus:border-[#1E40AF]"
+                className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center focus:outline-none focus:border-azure"
                 placeholder="Mín"
               />
               <span className="text-xs text-slate-500">e</span>
               <input
                 type="number" min={0} value={filterStockMax} onChange={e => setFilterStockMax(e.target.value)}
-                className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center focus:outline-none focus:border-[#1E40AF]"
+                className="w-20 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center focus:outline-none focus:border-azure"
                 placeholder="Máx"
               />
             </div>
@@ -730,7 +730,7 @@ export default function Stock() {
             {activeFilters.map((f, i) => (
               <button
                 key={i} onClick={f.clear}
-                className="flex items-center gap-1 bg-[#EFF6FF] text-[#1E40AF] text-xs px-2.5 py-1 rounded-full hover:bg-[#DBEAFE] transition-colors cursor-pointer"
+                className="flex items-center gap-1 bg-navy-ghost text-azure text-xs px-2.5 py-1 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 {f.label}
                 <svg width="10" height="10" fill="none" viewBox="0 0 24 24">
@@ -793,7 +793,7 @@ export default function Stock() {
       {filteredGrouped.length > 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-            <div className="text-sm font-medium text-[#1E1B4B]">
+            <div className="text-sm font-medium text-navy">
               {filteredGrouped.length} produto{filteredGrouped.length !== 1 ? 's' : ''}
               {hasMore && <span className="text-slate-400"> (parcial)</span>}
             </div>
@@ -824,7 +824,7 @@ export default function Stock() {
                     <Fragment key={g.product_id}>
                       <tr className={`hover:bg-slate-50/60 transition-colors ${isExpanded ? 'bg-slate-50/60' : ''}`}>
                         <td className="px-4 py-3">
-                          <div className="font-medium text-sm text-[#1E1B4B] leading-snug">{g.produto}</div>
+                          <div className="font-medium text-sm text-navy leading-snug">{g.produto}</div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-xs text-slate-400">{g.sku}</span>
                             {g.has_variants && (
@@ -862,7 +862,7 @@ export default function Stock() {
                               <button
                                 onClick={() => toggleExpand(g)}
                                 title="Ver grade"
-                                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isExpanded ? 'text-[#1E40AF] bg-[#EFF6FF]' : 'text-slate-400 hover:text-[#1E40AF] hover:bg-[#EFF6FF]'}`}
+                                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isExpanded ? 'text-azure bg-navy-ghost' : 'text-slate-400 hover:text-azure hover:bg-navy-ghost'}`}
                               >
                                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
                                   <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d={isExpanded ? 'M19 9l-7 7-7-7' : 'M9 5l7 7-7 7'}/>
@@ -872,7 +872,7 @@ export default function Stock() {
                             <button
                               onClick={() => openHistory(g)}
                               title="Histórico"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-[#1E40AF] hover:bg-[#EFF6FF] transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-azure hover:bg-navy-ghost transition-colors cursor-pointer"
                             >
                               <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -975,7 +975,7 @@ export default function Stock() {
                 <div key={g.product_id} className="p-3 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-[#1E1B4B] leading-snug">{g.produto}</div>
+                      <div className="text-sm font-medium text-navy leading-snug">{g.produto}</div>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                         <span className="text-xs text-slate-400">{g.sku}</span>
                         {meta?.categoria && <span className="text-xs text-slate-400">· {meta.categoria}</span>}
@@ -1082,7 +1082,7 @@ export default function Stock() {
           <div className="w-full sm:w-[400px] bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
             <div className="sticky top-0 bg-white border-b border-slate-100 px-4 py-3 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-[#1E1B4B]">Histórico de movimentos</div>
+                <div className="text-sm font-semibold text-navy">Histórico de movimentos</div>
                 <div className="text-xs text-slate-400 truncate">{historyProduct.produto}</div>
               </div>
               <button onClick={() => setHistoryProduct(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 flex-shrink-0">
@@ -1106,7 +1106,7 @@ export default function Stock() {
                         <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${isPositive ? 'bg-emerald-500' : 'bg-rose-400'}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-[#1E1B4B]">
+                            <span className="text-xs font-medium text-navy">
                               {MOVE_LABELS[m.type] || m.type}
                             </span>
                             <span className={`text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-500'}`}>
@@ -1151,7 +1151,7 @@ export default function Stock() {
             <div>
               <div className="text-xs text-zinc-500 mb-1">Loja</div>
               <select
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
                 value={adjustStoreId} onChange={e => setAdjustStoreId(e.target.value)}
               >
                 <option value="">Selecione...</option>
@@ -1165,7 +1165,7 @@ export default function Stock() {
                   <div className="text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-2">Nenhuma variante cadastrada.</div>
                 ) : (
                   <select
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
                     value={adjustVariantId} onChange={e => setAdjustVariantId(e.target.value)}
                   >
                     {adjustVariants.map(v => (
@@ -1179,7 +1179,7 @@ export default function Stock() {
               <div>
                 <div className="text-xs text-zinc-500 mb-1">Tipo</div>
                 <select
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
                   value={adjustType} onChange={e => setAdjustType(e.target.value as any)}
                 >
                   <option value="ENTRADA">Entrada</option>
@@ -1190,7 +1190,7 @@ export default function Stock() {
               <div>
                 <div className="text-xs text-zinc-500 mb-1">Quantidade</div>
                 <input
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
                   value={adjustQty} onChange={e => setAdjustQty(e.target.value)} type="number" min="1"
                 />
               </div>
@@ -1198,7 +1198,7 @@ export default function Stock() {
             <div>
               <div className="text-xs text-zinc-500 mb-1">Motivo (opcional)</div>
               <input
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure bg-white w-full"
                 value={adjustReason} onChange={e => setAdjustReason(e.target.value)}
                 placeholder="Ex.: quebra, inventário, recebimento"
               />
@@ -1323,7 +1323,7 @@ function RequestTransferModal({
               <div className="text-xs text-zinc-500 mb-1">Loja de origem</div>
               <select
                 value={fromStoreId} onChange={e => setFromStoreId(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
               >
                 {canFrom.map(s => (
                   <option key={s.store_id} value={s.store_id}>
@@ -1339,14 +1339,14 @@ function RequestTransferModal({
               <div className="text-xs text-zinc-500 mb-1">Quantidade</div>
               <input
                 type="number" min={1} value={qty} onChange={e => setQty(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
               />
             </div>
             <div>
               <div className="text-xs text-zinc-500 mb-1">Observações</div>
               <input
                 value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ex.: Reposição vitrine"
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure bg-white w-full"
               />
             </div>
           </div>

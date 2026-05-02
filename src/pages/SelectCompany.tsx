@@ -43,7 +43,7 @@ export default function SelectCompany() {
 
   return (
     <div className="p-4 sm:p-8 max-w-2xl mx-auto">
-      <h2 className="text-lg font-semibold text-[#1E1B4B] mb-1">Selecionar Empresa</h2>
+      <h2 className="text-lg font-semibold text-navy mb-1">Selecionar Empresa</h2>
       <div className="text-sm text-slate-400 mb-4">{subtitle}</div>
 
       {error && <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm mb-3">{error}</div>}

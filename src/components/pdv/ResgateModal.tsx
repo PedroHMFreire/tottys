@@ -75,7 +75,7 @@ export default function ResgateModal({ customer, cartTotal, resgateMinimo = 5, o
             step="0.01"
             value={valor}
             onChange={e => { setValor(e.target.value); setError(null) }}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-lg text-center font-semibold text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-lg text-center font-semibold text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
             autoFocus
           />
           <div className="flex justify-between mt-1">

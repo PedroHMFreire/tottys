@@ -206,10 +206,10 @@ export default function Customers() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
-      <div className="sticky top-0 bg-[#F8FAFC] pb-3 z-10 space-y-3">
+      <div className="sticky top-0 bg-surface-2 pb-3 z-10 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-[#1E1B4B]">Clientes</h1>
+            <h1 className="text-lg font-semibold text-navy">Clientes</h1>
             <p className="text-xs text-slate-400 mt-0.5">Base de clientes da empresa</p>
           </div>
           <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ export default function Customers() {
           value={q}
           onChange={e => setQ(e.target.value)}
           placeholder="Buscar por nome, CPF ou telefone…"
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
         />
       </div>
 
@@ -244,7 +244,7 @@ export default function Customers() {
             className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex items-center justify-between gap-2 hover:border-slate-300 transition-colors"
           >
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-sm text-[#1E1B4B] truncate">{c.nome}</div>
+              <div className="font-medium text-sm text-navy truncate">{c.nome}</div>
               <div className="text-xs text-slate-400 mt-0.5">{c.cpf_cnpj || c.contato || 'Sem contato'}</div>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -268,11 +268,11 @@ export default function Customers() {
           <div className="w-full sm:max-w-md lg:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-base font-semibold text-[#1E1B4B]">{selected.nome}</div>
+                <div className="text-base font-semibold text-navy">{selected.nome}</div>
                 <div className="text-xs text-slate-400 mt-0.5">{selected.cpf_cnpj || 'Sem CPF'} · {selected.contato || 'Sem contato'}</div>
               </div>
               <div className="flex gap-3 items-center shrink-0 ml-3">
-                <button onClick={() => openEdit(selected)} className="text-xs text-[#1E40AF] hover:text-[#1E3A8A] font-medium cursor-pointer transition-colors">Editar</button>
+                <button onClick={() => openEdit(selected)} className="text-xs text-azure hover:text-azure-dark font-medium cursor-pointer transition-colors">Editar</button>
                 {confirmDeleteId === selected.id ? (
                   <div className="flex items-center gap-1.5">
                     <button
@@ -382,7 +382,7 @@ export default function Customers() {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center">
           <div className="w-full sm:max-w-md lg:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between sticky top-0 bg-white pb-2 border-b border-slate-100">
-              <div className="text-base font-semibold text-[#1E1B4B]">{editCustomer ? 'Editar Cliente' : 'Novo Cliente'}</div>
+              <div className="text-base font-semibold text-navy">{editCustomer ? 'Editar Cliente' : 'Novo Cliente'}</div>
               <button onClick={() => setShowForm(false)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer transition-colors">Fechar</button>
             </div>
 
@@ -393,7 +393,7 @@ export default function Customers() {
                   value={form.nome}
                   onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
                   placeholder="Nome completo"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors"
                 />
               </div>
               <div>
@@ -402,7 +402,7 @@ export default function Customers() {
                   value={form.cpf_cnpj}
                   onChange={e => setForm(p => ({ ...p, cpf_cnpj: maskDoc(e.target.value) }))}
                   placeholder="000.000.000-00"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors"
                 />
               </div>
               <div>
@@ -411,7 +411,7 @@ export default function Customers() {
                   value={form.contato}
                   onChange={e => setForm(p => ({ ...p, contato: maskPhone(e.target.value) }))}
                   placeholder="(11) 99999-9999"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors"
                 />
               </div>
               <div>
@@ -421,7 +421,7 @@ export default function Customers() {
                   value={form.email}
                   onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                   placeholder="cliente@email.com"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors"
                 />
               </div>
               <div>
@@ -430,24 +430,24 @@ export default function Customers() {
                   value={form.endereco}
                   onChange={e => setForm(p => ({ ...p, endereco: e.target.value }))}
                   placeholder="Rua, número, bairro"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 mb-1 block">Nascimento</label>
-                  <input type="date" value={form.data_nascimento} onChange={e => setForm(p => ({ ...p, data_nascimento: e.target.value }))} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors" />
+                  <input type="date" value={form.data_nascimento} onChange={e => setForm(p => ({ ...p, data_nascimento: e.target.value }))} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 mb-1 block">Limite de Crédito</label>
-                  <input value={form.limite_credito} onChange={e => setForm(p => ({ ...p, limite_credito: e.target.value }))} placeholder="0,00" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors" />
+                  <input value={form.limite_credito} onChange={e => setForm(p => ({ ...p, limite_credito: e.target.value }))} placeholder="0,00" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors" />
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 mb-1 block">Score / Situação</label>
-                <select value={form.score_interno} onChange={e => setForm(p => ({ ...p, score_interno: e.target.value as ScoreInterno }))} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white">
+                <select value={form.score_interno} onChange={e => setForm(p => ({ ...p, score_interno: e.target.value as ScoreInterno }))} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white">
                   <option value="BOM">Bom pagador</option>
                   <option value="REGULAR">Regular</option>
                   <option value="RUIM">Risco</option>
@@ -457,7 +457,7 @@ export default function Customers() {
 
               <div>
                 <label className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 mb-1 block">Observações</label>
-                <textarea value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-300 focus:outline-none focus:border-[#1E40AF] transition-colors resize-none" />
+                <textarea value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-300 focus:outline-none focus:border-azure transition-colors resize-none" />
               </div>
             </div>
 

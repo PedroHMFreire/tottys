@@ -133,7 +133,7 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
               <button
                 key={m}
                 onClick={() => setMeio(m)}
-                className={`py-2 rounded-2xl border ${meio===m ? 'border-[#1E40AF] font-semibold text-[#1E40AF]' : 'border-zinc-300 text-slate-600'}`}
+                className={`py-2 rounded-2xl border ${meio===m ? 'border-azure font-semibold text-azure' : 'border-zinc-300 text-slate-600'}`}
               >{m}</button>
             ))}
           </div>
@@ -160,7 +160,7 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
                 type="number" step="0.01" min={0.01} max={total}
                 value={amount}
                 onChange={e => setAmount(Number(e.target.value))}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
               />
             </div>
           )}
@@ -195,7 +195,7 @@ export default function PayModal({ total, rules, onClose, onConfirm }: Props) {
                         max={rule.max_installments}
                         value={installments}
                         onChange={e=>setInstallments(Number(e.target.value))}
-                        className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                        className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                         placeholder="Parcelas"
                       />
                       <select value={whoPaysInterest} onChange={e=>setWhoPaysInterest(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2 bg-white">

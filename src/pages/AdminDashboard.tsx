@@ -81,7 +81,7 @@ function BarRow({ label, value, max, rank }: { label: string; value: number; max
           />
         </div>
       </div>
-      <span className="text-[12px] font-semibold text-[#1E3A8A] shrink-0">{formatBRL(value)}</span>
+      <span className="text-[12px] font-semibold text-azure-dark shrink-0">{formatBRL(value)}</span>
     </div>
   )
 }
@@ -91,12 +91,12 @@ function KpiCard({ icon: Icon, label, value, sub }: {
 }) {
   return (
     <div className="bg-white border border-slate-100 rounded-2xl px-5 py-4 flex items-start gap-3">
-      <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] flex items-center justify-center shrink-0 mt-0.5">
+      <div className="w-8 h-8 rounded-xl bg-navy-ghost flex items-center justify-center shrink-0 mt-0.5">
         <Icon size={15} className="text-[#3B82F6]" strokeWidth={2} />
       </div>
       <div className="min-w-0">
         <div className="text-xs font-medium tracking-wide uppercase text-slate-400 mb-0.5">{label}</div>
-        <div className="text-xl font-semibold text-[#1E1B4B] leading-tight">{value}</div>
+        <div className="text-xl font-semibold text-navy leading-tight">{value}</div>
         {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
       </div>
     </div>
@@ -459,10 +459,10 @@ export default function AdminDashboard() {
         <div className="w-full max-w-sm">
           <div className="bg-white border border-slate-100 rounded-2xl p-8 space-y-6">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] flex items-center justify-center mb-4">
+              <div className="w-10 h-10 rounded-xl bg-navy-ghost flex items-center justify-center mb-4">
                 <Building2 size={18} className="text-[#3B82F6]" strokeWidth={2} />
               </div>
-              <h1 className="text-xl font-semibold text-[#1E1B4B]">Bem-vindo ao Tottys</h1>
+              <h1 className="text-xl font-semibold text-navy">Bem-vindo ao Tottys</h1>
               <p className="text-sm text-slate-500 mt-1">Configure no seu ritmo. Comece por aqui.</p>
             </div>
 
@@ -487,7 +487,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => navigate('/adm/companies')}
-              className="w-full flex items-center justify-center gap-2 bg-[#1E40AF] hover:bg-[#1D3B9D] text-white text-sm font-medium py-3 rounded-xl transition-colors duration-200 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-[#1D3B9D] text-white text-sm font-medium py-3 rounded-xl transition-colors duration-200 cursor-pointer"
             >
               Criar minha empresa
               <ArrowRight size={14} strokeWidth={2} />
@@ -512,7 +512,7 @@ export default function AdminDashboard() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-[#1E1B4B]">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-navy">Dashboard</h1>
           <p className="text-xs text-slate-400 mt-0.5">
             {scope === 'global' ? 'Visão consolidada · todas as empresas' : (company?.nome || 'Últimos 14 dias')}
           </p>
@@ -527,7 +527,7 @@ export default function AdminDashboard() {
                   key={s}
                   onClick={() => setScope(s)}
                   className={`px-4 py-2 font-medium transition-colors duration-150 cursor-pointer ${
-                    scope === s ? 'bg-[#1E40AF] text-white' : 'text-slate-500 hover:text-slate-700'
+                    scope === s ? 'bg-primary text-white' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   {s === 'company' ? 'Por empresa' : 'Global'}
@@ -595,7 +595,7 @@ export default function AdminDashboard() {
           <SectionCard
             title="Faturamento por empresa"
             action={
-              <button onClick={() => csvDownload('faturamento_por_empresa', companySummary)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#1E40AF] cursor-pointer transition-colors duration-150">
+              <button onClick={() => csvDownload('faturamento_por_empresa', companySummary)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-azure cursor-pointer transition-colors duration-150">
                 <Download size={12} /> CSV
               </button>
             }
@@ -608,7 +608,7 @@ export default function AdminDashboard() {
           <SectionCard
             title="Caixas abertos por empresa"
             action={
-              <button onClick={() => csvDownload('caixa_por_empresa', companyCashSummary)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#1E40AF] cursor-pointer transition-colors duration-150">
+              <button onClick={() => csvDownload('caixa_por_empresa', companyCashSummary)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-azure cursor-pointer transition-colors duration-150">
                 <Download size={12} /> CSV
               </button>
             }
@@ -655,7 +655,7 @@ export default function AdminDashboard() {
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   <span className="text-[12px] text-slate-700 truncate">{c.store}</span>
                 </div>
-                <span className="text-[12px] font-semibold text-[#1E3A8A] shrink-0 ml-3">{formatBRL(c.esperado)}</span>
+                <span className="text-[12px] font-semibold text-azure-dark shrink-0 ml-3">{formatBRL(c.esperado)}</span>
               </div>
             ))
           }
@@ -700,8 +700,8 @@ export default function AdminDashboard() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors duration-150 group cursor-pointer"
                 >
-                  <Icon size={14} className="text-slate-400 group-hover:text-[#1E40AF] transition-colors duration-150" strokeWidth={2} />
-                  <span className="text-[12px] font-medium text-slate-600 group-hover:text-[#1E1B4B]">{label}</span>
+                  <Icon size={14} className="text-slate-400 group-hover:text-azure transition-colors duration-150" strokeWidth={2} />
+                  <span className="text-[12px] font-medium text-slate-600 group-hover:text-navy">{label}</span>
                   <ChevronRight size={11} className="ml-auto text-slate-300 group-hover:text-slate-400 transition-colors duration-150" />
                 </a>
               ) : (
@@ -710,8 +710,8 @@ export default function AdminDashboard() {
                   to={to}
                   className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors duration-150 group cursor-pointer"
                 >
-                  <Icon size={14} className="text-slate-400 group-hover:text-[#1E40AF] transition-colors duration-150" strokeWidth={2} />
-                  <span className="text-[12px] font-medium text-slate-600 group-hover:text-[#1E1B4B]">{label}</span>
+                  <Icon size={14} className="text-slate-400 group-hover:text-azure transition-colors duration-150" strokeWidth={2} />
+                  <span className="text-[12px] font-medium text-slate-600 group-hover:text-navy">{label}</span>
                   <ChevronRight size={11} className="ml-auto text-slate-300 group-hover:text-slate-400 transition-colors duration-150" />
                 </Link>
               )
@@ -728,7 +728,7 @@ export default function AdminDashboard() {
                   companyStockSummary.forEach(r => { const cur = all.get(r.company_id) || { company_id: r.company_id, nome: r.nome }; cur.estoque_total = r.total; all.set(r.company_id, cur) })
                   csvDownload('consolidado_por_empresa', Array.from(all.values()))
                 }}
-                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-[#1E40AF] cursor-pointer transition-colors duration-150"
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-azure cursor-pointer transition-colors duration-150"
               >
                 <Download size={12} strokeWidth={2} />
                 Exportar consolidado por empresa

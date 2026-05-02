@@ -111,7 +111,7 @@ export default function SetupChecklist() {
       {/* Barra de progresso */}
       <div className="w-full bg-zinc-100 rounded-full h-1.5">
         <div
-          className="bg-[#1E40AF] h-1.5 rounded-full transition-all duration-500"
+          className="bg-primary h-1.5 rounded-full transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -121,14 +121,14 @@ export default function SetupChecklist() {
         {checks.map(item => (
           <div key={item.key} className="flex items-center gap-3">
             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-              item.done ? 'bg-[#1E40AF] border-[#1E40AF]' : 'border-zinc-300'
+              item.done ? 'bg-primary border-azure' : 'border-zinc-300'
             }`}>
               {item.done && <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>}
             </div>
             <div className="flex-1 min-w-0">
-              <div className={`text-sm ${item.done ? 'text-slate-400 line-through' : 'text-[#1E1B4B] font-medium'}`}>
+              <div className={`text-sm ${item.done ? 'text-slate-400 line-through' : 'text-navy font-medium'}`}>
                 {item.label}
               </div>
               <div className="text-xs text-slate-400">{item.sublabel}</div>

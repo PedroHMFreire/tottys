@@ -124,7 +124,7 @@ export default function Collections() {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[#1E1B4B]">Coleções</h1>
+        <h1 className="text-lg font-semibold text-navy">Coleções</h1>
         <Button onClick={openNew}>+ Nova Coleção</Button>
       </div>
 
@@ -190,7 +190,7 @@ export default function Collections() {
                 <input
                   value={form.nome}
                   onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full"
                   placeholder="Ex.: Verão 2026"
                 />
               </div>
@@ -201,7 +201,7 @@ export default function Collections() {
                   <select
                     value={form.temporada}
                     onChange={e => setForm(f => ({ ...f, temporada: e.target.value }))}
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full"
                   >
                     <option value="">Selecione</option>
                     {TEMPORADAS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -212,7 +212,7 @@ export default function Collections() {
                   <select
                     value={form.ano}
                     onChange={e => setForm(f => ({ ...f, ano: e.target.value }))}
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full"
                   >
                     <option value="">—</option>
                     {ANOS.map(a => <option key={a} value={a}>{a}</option>)}
@@ -225,7 +225,7 @@ export default function Collections() {
                 <select
                   value={form.status}
                   onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full"
                 >
                   <option value="RASCUNHO">Rascunho</option>
                   <option value="ATIVA">Ativa</option>

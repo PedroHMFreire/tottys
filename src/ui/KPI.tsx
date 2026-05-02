@@ -27,12 +27,12 @@ export default function KPI({ label, value, sub, Icon, trend, trendLabel }: Prop
           {label}
         </span>
         {Icon && (
-          <div className="w-7 h-7 rounded-lg bg-[#EFF6FF] flex items-center justify-center shrink-0">
-            <Icon size={14} className="text-[#1E40AF]" strokeWidth={2} />
+          <div className="w-7 h-7 rounded-lg bg-navy-ghost flex items-center justify-center shrink-0">
+            <Icon size={14} className="text-azure" strokeWidth={2} />
           </div>
         )}
       </div>
-      <div className="mt-2 text-xl font-semibold text-[#1E1B4B] tracking-tight leading-none">
+      <div className="mt-2 text-xl font-semibold text-navy tracking-tight leading-none">
         {value}
       </div>
       {(sub || t) && (

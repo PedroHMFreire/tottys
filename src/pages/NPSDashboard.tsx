@@ -85,7 +85,7 @@ export default function NPSDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">NPS — Satisfação</h1>
+          <h1 className="text-lg font-semibold text-navy">NPS — Satisfação</h1>
           <p className="text-xs text-slate-400 mt-0.5">Net Promoter Score das avaliações recebidas</p>
         </div>
         <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
@@ -93,7 +93,7 @@ export default function NPSDashboard() {
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${period === p ? 'bg-white shadow text-[#1E1B4B]' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${period === p ? 'bg-white shadow text-navy' : 'text-slate-500 hover:text-slate-700'}`}
             >
               {p === 'all' ? 'Tudo' : p === '7d' ? '7 dias' : p === '30d' ? '30 dias' : '90 dias'}
             </button>

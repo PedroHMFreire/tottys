@@ -19,7 +19,7 @@ export default function GradeMatrix({ variants, onCellClick, readOnly = false, h
 
   function cellClass(qty: number | undefined, isHighlighted: boolean) {
     const base = 'px-2 py-1.5 text-center text-xs rounded-lg cursor-pointer transition-colors'
-    if (isHighlighted) return `${base} ring-2 ring-[#1E40AF] bg-[#1E40AF] text-white font-bold`
+    if (isHighlighted) return `${base} ring-2 ring-azure bg-primary text-white font-bold`
     if (qty == null) return `${base} bg-zinc-100 text-zinc-300 cursor-not-allowed`
     if (qty === 0) return `${base} bg-red-50 text-red-400 border border-red-200`
     if (qty <= 2) return `${base} bg-amber-50 text-amber-700 border border-amber-200`

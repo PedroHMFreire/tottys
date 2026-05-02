@@ -56,7 +56,7 @@ export default function SelectStore() {
 
   return (
     <div className="p-4 sm:p-8 max-w-2xl mx-auto">
-      <h2 className="text-lg font-semibold text-[#1E1B4B] mb-4">Selecione a Loja</h2>
+      <h2 className="text-lg font-semibold text-navy mb-4">Selecione a Loja</h2>
       {!company?.id && (
         <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm mb-3">
           Selecione uma empresa primeiro.

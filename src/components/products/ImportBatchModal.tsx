@@ -252,7 +252,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-end sm:items-center justify-center overflow-y-auto" role="dialog" aria-modal="true">
       <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl p-4 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between sticky top-0 bg-white pb-2">
-          <div className="text-base font-semibold text-[#1E1B4B]">Importar produtos em lote</div>
+          <div className="text-base font-semibold text-navy">Importar produtos em lote</div>
           <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">Fechar</button>
         </div>
 
@@ -260,7 +260,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
         {step === 'upload' && (
           <div className="space-y-3">
             <div className="rounded-2xl border border-slate-200 p-3 text-sm text-slate-600 space-y-1">
-              <div className="font-medium text-[#1E1B4B]">Como funciona</div>
+              <div className="font-medium text-navy">Como funciona</div>
               <div className="text-xs text-slate-500">
                 1. Selecione uma planilha <b>Excel (.xlsx)</b> ou <b>CSV</b>.<br />
                 2. Mapeie as colunas do seu arquivo para os campos do sistema.<br />
@@ -271,7 +271,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
 
             <button
               onClick={downloadProductTemplate}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#1E40AF] text-[#1E40AF] text-sm font-medium hover:bg-[#EFF6FF] transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-azure text-azure text-sm font-medium hover:bg-navy-ghost transition-colors cursor-pointer"
             >
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4"/></svg>
               Baixar planilha modelo (.xlsx)
@@ -299,7 +299,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
             />
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full h-24 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-[#1E40AF] hover:text-[#1E40AF] text-sm transition-colors cursor-pointer flex flex-col items-center justify-center gap-1"
+              className="w-full h-24 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-azure hover:text-azure text-sm transition-colors cursor-pointer flex flex-col items-center justify-center gap-1"
             >
               <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/></svg>
               <span>Clique para selecionar o arquivo</span>
@@ -313,7 +313,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
         {step === 'map' && (
           <div className="space-y-3">
             <div className="text-sm text-slate-500">
-              Arquivo: <span className="font-medium text-[#1E1B4B]">{fileName}</span> — {rows.length} linhas
+              Arquivo: <span className="font-medium text-navy">{fileName}</span> — {rows.length} linhas
             </div>
             <div className="text-xs text-slate-400 mb-1">
               Mapeie as colunas do CSV para os campos do sistema. Colunas marcadas com <span className="text-red-500">*</span> são obrigatórias.
@@ -325,7 +325,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
                     {f.label}{f.required && <span className="text-red-500 ml-0.5">*</span>}
                   </div>
                   <select
-                    className="flex-1 border border-slate-200 rounded-xl px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF]"
+                    className="flex-1 border border-slate-200 rounded-xl px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-azure"
                     value={colMap[f.key] || ''}
                     onChange={e => setColMap(p => ({ ...p, [f.key]: e.target.value }))}
                   >
@@ -376,7 +376,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
               <button
                 disabled={!requiredMapped}
                 onClick={runImport}
-                className="h-11 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold cursor-pointer transition-colors"
+                className="h-11 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold cursor-pointer transition-colors"
               >
                 Importar {rows.length} produtos
               </button>
@@ -387,10 +387,10 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
         {/* STEP: importing */}
         {step === 'importing' && (
           <div className="space-y-4 py-4 text-center">
-            <div className="text-sm font-medium text-[#1E1B4B]">Importando produtos…</div>
+            <div className="text-sm font-medium text-navy">Importando produtos…</div>
             <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
               <div
-                className="h-3 bg-[#1E40AF] rounded-full transition-all duration-200"
+                className="h-3 bg-primary rounded-full transition-all duration-200"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -417,7 +417,7 @@ export default function ImportBatchModal({ onClose, storeId, onImported }: Props
                 </div>
               </div>
             )}
-            <button onClick={onClose} className="w-full h-11 rounded-xl bg-[#1E1B4B] text-white text-sm font-medium hover:bg-[#1E40AF] cursor-pointer transition-colors">
+            <button onClick={onClose} className="w-full h-11 rounded-xl bg-navy text-white text-sm font-medium hover:bg-primary cursor-pointer transition-colors">
               Fechar
             </button>
           </div>

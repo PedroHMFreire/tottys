@@ -104,7 +104,7 @@ export default function GradeEditor({ productSku, existingVariants = [], onChang
             value={selectedPreset !== null ? SIZE_PRESETS[selectedPreset].sizes.join(', ') : customSizes}
             onChange={e => { setSelectedPreset(null); setCustomSizes(e.target.value) }}
             readOnly={selectedPreset !== null}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white disabled:bg-zinc-50"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white disabled:bg-zinc-50"
             placeholder="P, M, G, GG"
           />
         </div>
@@ -115,7 +115,7 @@ export default function GradeEditor({ productSku, existingVariants = [], onChang
         <input
           value={coresInput}
           onChange={e => setCoresInput(e.target.value)}
-          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
           placeholder="Ex.: Preto, Branco, Azul Marinho"
         />
       </div>

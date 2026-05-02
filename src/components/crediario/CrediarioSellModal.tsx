@@ -101,14 +101,14 @@ export default function CrediarioSellModal({ cart, total, companyId, storeId, on
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className={`px-2 py-1 rounded-full ${step === 'cliente' ? 'bg-[#1E40AF] text-white' : 'bg-zinc-100 text-slate-400'}`}>1. Cliente</span>
+          <span className={`px-2 py-1 rounded-full ${step === 'cliente' ? 'bg-primary text-white' : 'bg-zinc-100 text-slate-400'}`}>1. Cliente</span>
           <span className="text-slate-400">→</span>
-          <span className={`px-2 py-1 rounded-full ${step === 'parcelas' ? 'bg-[#1E40AF] text-white' : 'bg-zinc-100 text-slate-400'}`}>2. Parcelas</span>
+          <span className={`px-2 py-1 rounded-full ${step === 'parcelas' ? 'bg-primary text-white' : 'bg-zinc-100 text-slate-400'}`}>2. Parcelas</span>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
           <div className="text-slate-400 text-xs mb-1">Total da venda</div>
-          <div className="text-xl font-semibold text-[#1E1B4B]">{formatBRL(total)}</div>
+          <div className="text-xl font-semibold text-navy">{formatBRL(total)}</div>
         </div>
 
         {step === 'cliente' && (
@@ -134,7 +134,7 @@ export default function CrediarioSellModal({ cart, total, companyId, storeId, on
                 <input
                   value={entrada}
                   onChange={e => setEntrada(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                   placeholder="0,00"
                 />
               </div>
@@ -145,7 +145,7 @@ export default function CrediarioSellModal({ cart, total, companyId, storeId, on
                     <button
                       key={n}
                       onClick={() => setNumParcelas(String(n))}
-                      className={`flex-1 py-2 rounded-xl border text-sm font-medium ${parcelasNum === n ? 'bg-[#1E40AF] text-white' : 'hover:bg-zinc-50'}`}
+                      className={`flex-1 py-2 rounded-xl border text-sm font-medium ${parcelasNum === n ? 'bg-primary text-white' : 'hover:bg-zinc-50'}`}
                     >
                       {n}x
                     </button>
@@ -158,7 +158,7 @@ export default function CrediarioSellModal({ cart, total, companyId, storeId, on
                   type="date"
                   value={primeiraVenc}
                   onChange={e => setPrimeiraVenc(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 />
               </div>
             </div>

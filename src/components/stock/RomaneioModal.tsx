@@ -405,8 +405,8 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 flex-shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] flex items-center justify-center">
-                <FileText size={15} className="text-[#1E40AF]" />
+              <div className="w-8 h-8 rounded-lg bg-navy-ghost flex items-center justify-center">
+                <FileText size={15} className="text-azure" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-slate-800">Gerar Romaneio</div>
@@ -437,11 +437,11 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
                     onClick={() => setModo(opt.value)}
                     className={`rounded-xl border p-3 text-left transition-all cursor-pointer ${
                       modo === opt.value
-                        ? 'border-[#1E40AF] bg-[#EFF6FF]'
+                        ? 'border-azure bg-navy-ghost'
                         : 'border-slate-200 bg-white hover:bg-slate-50'
                     }`}
                   >
-                    <div className={`text-sm font-semibold ${modo === opt.value ? 'text-[#1E40AF]' : 'text-slate-700'}`}>
+                    <div className={`text-sm font-semibold ${modo === opt.value ? 'text-azure' : 'text-slate-700'}`}>
                       {opt.label}
                     </div>
                     <div className="text-xs text-slate-400 mt-0.5">{opt.sub}</div>
@@ -460,7 +460,7 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
                     onClick={() => setScopeFilter(opt.value)}
                     className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
                       scopeFilter === opt.value
-                        ? 'bg-[#1E40AF] text-white border-[#1E40AF]'
+                        ? 'bg-primary text-white border-azure'
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -477,7 +477,7 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
                 <select
                   value={categoria}
                   onChange={e => setCategoria(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] bg-white cursor-pointer"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white cursor-pointer"
                 >
                   <option value="">Todas as categorias</option>
                   {categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
@@ -493,7 +493,7 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="Nome ou SKU (opcional)"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure bg-white"
               />
             </div>
 
@@ -552,7 +552,7 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
                 <button
                   onClick={generate}
                   disabled={loading || !storeId}
-                  className="h-11 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="h-11 rounded-xl bg-primary hover:bg-azure-dark text-white text-sm font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <><Loader2 size={15} className="animate-spin" />Gerando…</>
@@ -577,7 +577,7 @@ export default function RomaneioModal({ companyId, storeId, storeName, onClose }
                 </button>
                 <button
                   onClick={generatePDF}
-                  className="h-11 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-semibold cursor-pointer transition-colors flex items-center justify-center gap-2"
+                  className="h-11 rounded-xl bg-primary hover:bg-azure-dark text-white text-sm font-semibold cursor-pointer transition-colors flex items-center justify-center gap-2"
                 >
                   <Download size={15} />
                   Baixar PDF

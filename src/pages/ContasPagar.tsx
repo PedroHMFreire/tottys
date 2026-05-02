@@ -152,7 +152,7 @@ export default function ContasPagar() {
       {/* Header */}
       <div className="sticky top-0 bg-white border-b px-4 py-3 z-10 space-y-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">Contas a Pagar</h1>
+          <h1 className="text-lg font-semibold text-navy">Contas a Pagar</h1>
           <Button onClick={openNew}>+ Nova</Button>
         </div>
         <div className="flex gap-1.5">
@@ -160,7 +160,7 @@ export default function ContasPagar() {
             <button
               key={f}
               onClick={() => setFiltro(f)}
-              className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-colors ${filtro === f ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+              className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-colors ${filtro === f ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
             >
               {f === 'PENDENTE' ? 'Pendentes' : f === 'PAGO' ? 'Pagas' : 'Todas'}
             </button>
@@ -285,7 +285,7 @@ export default function ContasPagar() {
                 step="0.01"
                 value={valorPago}
                 onChange={e => setValorPago(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-lg font-semibold text-[#1E1B4B] text-center focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-lg font-semibold text-navy text-center focus:outline-none focus:border-azure transition-colors bg-white w-full"
                 autoFocus
               />
             </div>
@@ -314,7 +314,7 @@ export default function ContasPagar() {
                 value={form.nome}
                 onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
                 placeholder="Ex.: Aluguel junho, Fornecedor XYZ..."
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full"
                 autoFocus
               />
             </div>
@@ -326,7 +326,7 @@ export default function ContasPagar() {
                   type="number" min="0" step="0.01"
                   value={form.valor}
                   onChange={e => setForm(p => ({ ...p, valor: e.target.value }))}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full"
                   placeholder="0,00"
                 />
               </div>
@@ -336,7 +336,7 @@ export default function ContasPagar() {
                   type="date"
                   value={form.vencimento}
                   onChange={e => setForm(p => ({ ...p, vencimento: e.target.value }))}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ export default function ContasPagar() {
                   <button
                     key={cat}
                     onClick={() => setForm(p => ({ ...p, categoria: cat }))}
-                    className={`py-2 px-3 rounded-xl text-xs text-left border cursor-pointer transition-colors ${form.categoria === cat ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    className={`py-2 px-3 rounded-xl text-xs text-left border cursor-pointer transition-colors ${form.categoria === cat ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                   >
                     {CAT_LABEL[cat]}
                   </button>
@@ -374,7 +374,7 @@ export default function ContasPagar() {
               <input
                 value={form.observacoes}
                 onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full"
                 placeholder="Nota fiscal, referência..."
               />
             </div>

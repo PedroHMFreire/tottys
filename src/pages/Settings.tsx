@@ -13,7 +13,7 @@ export default function Settings() {
 
   return (
     <div className="p-4 sm:p-6 max-w-2xl mx-auto">
-      <h1 className="text-lg font-semibold text-[#1E1B4B] mb-3">Configurações</h1>
+      <h1 className="text-lg font-semibold text-navy mb-3">Configurações</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         <Link to="/company"><Button className="w-full">Selecionar Empresa</Button></Link>
         <Link to="/store"><Button className="w-full">Selecionar Loja</Button></Link>

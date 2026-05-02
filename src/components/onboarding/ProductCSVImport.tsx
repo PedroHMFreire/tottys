@@ -153,7 +153,7 @@ export default function ProductCSVImport({ companyId, storeId, onDone, onSkip }:
     return (
       <div className="space-y-4">
         <div className="text-center space-y-1">
-          <div className="font-semibold text-base text-[#1E1B4B]">Importe seus produtos</div>
+          <div className="font-semibold text-base text-navy">Importe seus produtos</div>
           <div className="text-sm text-zinc-500">
             Planilha Excel ou CSV. Detectamos as colunas automaticamente.
           </div>
@@ -161,7 +161,7 @@ export default function ProductCSVImport({ companyId, storeId, onDone, onSkip }:
 
         <button
           onClick={downloadOnboardingTemplate}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#1E40AF] text-[#1E40AF] text-sm font-medium hover:bg-[#EFF6FF] transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-azure text-azure text-sm font-medium hover:bg-navy-ghost transition-colors cursor-pointer"
         >
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4"/></svg>
           Baixar planilha modelo (.xlsx)
@@ -172,7 +172,7 @@ export default function ProductCSVImport({ companyId, storeId, onDone, onSkip }:
           onDragLeave={() => setDragOver(false)}
           onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
           onClick={() => fileRef.current?.click()}
-          className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${dragOver ? 'border-[#1E40AF] bg-[#EFF6FF]' : 'border-zinc-300 hover:border-zinc-400'}`}
+          className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${dragOver ? 'border-azure bg-navy-ghost' : 'border-zinc-300 hover:border-zinc-400'}`}
         >
           <div className="text-3xl mb-2">📄</div>
           <div className="text-sm font-medium">Arraste o arquivo aqui ou clique para selecionar</div>
@@ -280,10 +280,10 @@ export default function ProductCSVImport({ companyId, storeId, onDone, onSkip }:
     const processados = Math.round((progress / 100) * rows.length)
     return (
       <div className="space-y-4 text-center py-4">
-        <div className="font-semibold text-[#1E1B4B]">Importando produtos…</div>
+        <div className="font-semibold text-navy">Importando produtos…</div>
         <div className="w-full bg-slate-100 rounded-full h-2">
           <div
-            className="bg-[#1E40AF] h-2 rounded-full transition-all duration-500"
+            className="bg-primary h-2 rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>

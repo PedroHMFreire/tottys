@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
 import type { Role } from '@/domain/types'
+import ThemeToggle from '@/components/ThemeToggle'
 
 type NoticeTone = 'info' | 'success' | 'warn' | 'error'
 
@@ -173,11 +174,14 @@ export default function Login() {
         .login-input { transition: border-color 150ms ease; }
       `}</style>
 
-      <div className="login-root min-h-screen bg-[#F5F3FF] flex flex-col items-center justify-center p-6">
+      <div className="login-root min-h-screen bg-[#F5F3FF] dark:bg-slate-900 flex flex-col items-center justify-center p-6 relative">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
 
         {/* Wordmark */}
         <div className="mb-10 text-center select-none">
-          <div className="login-wordmark text-[2rem] font-semibold text-[#1E1B4B] tracking-tight leading-none">
+          <div className="login-wordmark text-[2rem] font-semibold text-navy tracking-tight leading-none">
             Tottys
           </div>
           <div className="mt-2 text-xs font-medium tracking-[0.2em] uppercase text-[#6366F1]">
@@ -197,7 +201,7 @@ export default function Login() {
                 onClick={() => switchMode(m)}
                 className={`flex-1 py-4 text-[13px] font-medium tracking-wide cursor-pointer transition-colors duration-200 border-b-2 -mb-px ${
                   mode === m
-                    ? 'text-[#1E1B4B] border-[#6366F1]'
+                    ? 'text-navy border-[#6366F1]'
                     : 'text-slate-400 border-transparent hover:text-slate-500'
                 }`}
               >
@@ -221,7 +225,7 @@ export default function Login() {
                     placeholder="Seu nome completo"
                     autoComplete="name"
                     required
-                    className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#1E1B4B] placeholder-slate-300"
+                    className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy placeholder-slate-300"
                   />
                 </Field>
 
@@ -233,7 +237,7 @@ export default function Login() {
                     placeholder="11 99999-9999"
                     autoComplete="tel"
                     required
-                    className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#1E1B4B] placeholder-slate-300"
+                    className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy placeholder-slate-300"
                   />
                 </Field>
               </>
@@ -247,7 +251,7 @@ export default function Login() {
                 placeholder="voce@email.com"
                 autoComplete="email"
                 required
-                className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#1E1B4B] placeholder-slate-300"
+                className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy placeholder-slate-300"
               />
             </Field>
 
@@ -273,7 +277,7 @@ export default function Login() {
                   placeholder="••••••••"
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   required
-                  className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 pr-11 text-sm text-[#1E1B4B] placeholder-slate-300"
+                  className="login-input w-full border border-slate-200 rounded-xl px-4 py-3 pr-11 text-sm text-navy placeholder-slate-300"
                 />
                 <button
                   type="button"

@@ -389,7 +389,7 @@ export default function Products() {
     <div className="pb-8 max-w-4xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">Produtos</h1>
+          <h1 className="text-lg font-semibold text-navy">Produtos</h1>
           <p className="text-xs text-slate-400 mt-0.5">Gerencie o catálogo da empresa</p>
         </div>
         <div className="flex items-center gap-2">
@@ -475,7 +475,7 @@ export default function Products() {
             value={q}
             onChange={e => setQ(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && search()}
-            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors"
+            className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors"
             placeholder="Buscar por SKU, nome ou EAN…"
             autoComplete="off"
           />

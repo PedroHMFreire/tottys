@@ -211,7 +211,7 @@ export default function Cobranca() {
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
       <div className="sticky top-0 bg-white border-b px-4 py-3 z-10 space-y-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">Cobrança WhatsApp</h1>
+          <h1 className="text-lg font-semibold text-navy">Cobrança WhatsApp</h1>
           <button onClick={() => setShowConfig(true)} className="text-xs text-zinc-500 border rounded-xl px-3 py-1 hover:bg-zinc-50">
             Configurar
           </button>
@@ -219,7 +219,7 @@ export default function Cobranca() {
         <div className="flex gap-1.5">
           <button
             onClick={() => setTab('lembrete')}
-            className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-colors ${tab === 'lembrete' ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-colors ${tab === 'lembrete' ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             Lembrete
           </button>
@@ -397,7 +397,7 @@ export default function Cobranca() {
                 value={configForm.pix_chave || ''}
                 onChange={e => setConfigForm(p => ({ ...p, pix_chave: e.target.value }))}
                 placeholder="CPF, CNPJ, e-mail ou chave aleatória"
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white w-full"
               />
             </div>
 
@@ -408,7 +408,7 @@ export default function Cobranca() {
                 value={configForm.msg_lembrete || ''}
                 onChange={e => setConfigForm(p => ({ ...p, msg_lembrete: e.target.value }))}
                 rows={4}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full resize-none"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full resize-none"
               />
             </div>
 
@@ -419,7 +419,7 @@ export default function Cobranca() {
                 value={configForm.msg_cobranca || ''}
                 onChange={e => setConfigForm(p => ({ ...p, msg_cobranca: e.target.value }))}
                 rows={4}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] focus:outline-none focus:border-[#1E40AF] transition-colors bg-white w-full resize-none"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure transition-colors bg-white w-full resize-none"
               />
             </div>
 

@@ -127,7 +127,7 @@ export default function Home() {
       <header className="p-4 pb-2">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-[#1E1B4B] tracking-tight">Tottys PDV</h1>
+            <h1 className="text-lg font-semibold text-navy tracking-tight">Tottys PDV</h1>
             <p className="text-slate-400 text-sm -mt-0.5">Frente de loja</p>
           </div>
           <div className="flex items-center gap-2">

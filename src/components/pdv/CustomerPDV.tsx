@@ -178,7 +178,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
             onChange={e => { setQ(e.target.value); setOpen(true) }}
             onFocus={() => q.trim() && setOpen(true)}
             placeholder="Buscar cliente (nome, CPF ou telefone)..."
-            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
           />
 
           {/* Dropdown */}
@@ -210,7 +210,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
               {/* New customer button always visible when dropdown is open */}
               <div
                 onMouseDown={e => { e.preventDefault(); openQuick() }}
-                className="px-3 py-2.5 cursor-pointer hover:bg-[#EFF6FF] flex items-center gap-2 text-[#1E40AF] border-t border-slate-100"
+                className="px-3 py-2.5 cursor-pointer hover:bg-navy-ghost flex items-center gap-2 text-azure border-t border-slate-100"
               >
                 <UserPlus size={14} />
                 <span className="text-sm font-medium">
@@ -225,7 +225,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
             <button
               type="button"
               onMouseDown={e => { e.preventDefault(); openQuick() }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-slate-400 hover:text-[#1E40AF] transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-slate-400 hover:text-azure transition-colors cursor-pointer"
             >
               <UserPlus size={13} />
               <span>novo</span>
@@ -236,10 +236,10 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
 
       {/* Quick registration form */}
       {showQuick && (
-        <div className="rounded-2xl border-2 border-[#1E40AF]/20 bg-[#F8FAFF] p-4 space-y-3">
+        <div className="rounded-2xl border-2 border-azure/20 bg-surface-2 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[#1E40AF] flex items-center justify-center">
+              <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
                 <UserPlus size={13} className="text-white" />
               </div>
               <span className="text-sm font-semibold text-slate-800">Novo cliente</span>
@@ -263,7 +263,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
               onChange={e => { setForm(f => ({ ...f, nome: e.target.value })); setSaveError(null) }}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               placeholder="Nome completo"
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF] transition-colors"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-azure transition-colors"
             />
           </div>
 
@@ -278,7 +278,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
                 value={form.contato}
                 onChange={e => setForm(f => ({ ...f, contato: maskPhone(e.target.value) }))}
                 placeholder="(11) 99999-9999"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF] transition-colors"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-azure transition-colors"
               />
             </div>
             <div>
@@ -290,7 +290,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
                 onChange={e => setForm(f => ({ ...f, cpf: maskCPF(e.target.value) }))}
                 placeholder="000.000.000-00"
                 maxLength={14}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF] transition-colors font-mono"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-azure transition-colors font-mono"
               />
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
               value={form.email}
               onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setSaveError(null) }}
               placeholder="cliente@email.com"
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#1E40AF] transition-colors"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-azure transition-colors"
             />
           </div>
 
@@ -325,7 +325,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
             <button
               onClick={handleSave}
               disabled={saving || !form.nome.trim()}
-              className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-50 text-white text-sm font-semibold cursor-pointer transition-colors"
+              className="h-10 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-50 text-white text-sm font-semibold cursor-pointer transition-colors"
             >
               {saving ? <Loader2 size={14} className="animate-spin" /> : null}
               {saving ? 'Salvando…' : 'Cadastrar e selecionar'}

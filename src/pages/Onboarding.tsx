@@ -27,14 +27,14 @@ function StepBar({ current }: { current: WizardStep }) {
     <div className="flex items-center gap-1 mb-6">
       {STEPS.map((s, i) => (
         <div key={s.key} className="flex items-center gap-1 flex-1">
-          <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${i <= idx ? 'bg-[#1E40AF] text-white' : 'bg-zinc-200 text-slate-400'}`}>
+          <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${i <= idx ? 'bg-primary text-white' : 'bg-zinc-200 text-slate-400'}`}>
             {i < idx ? '✓' : i + 1}
           </div>
-          <div className={`text-xs hidden sm:block ${i <= idx ? 'text-[#1E1B4B] font-medium' : 'text-slate-400'}`}>
+          <div className={`text-xs hidden sm:block ${i <= idx ? 'text-navy font-medium' : 'text-slate-400'}`}>
             {s.label}
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`flex-1 h-0.5 ${i < idx ? 'bg-[#1E40AF]' : 'bg-zinc-200'}`} />
+            <div className={`flex-1 h-0.5 ${i < idx ? 'bg-primary' : 'bg-zinc-200'}`} />
           )}
         </div>
       ))}
@@ -194,7 +194,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-zinc-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-white to-zinc-50 dark:from-slate-900 dark:to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
 
         {/* Logo / título */}
@@ -339,7 +339,7 @@ export default function Onboarding() {
 
               {/* Resumo */}
               <div className="rounded-xl border bg-zinc-50 p-4 text-sm text-left space-y-1.5">
-                <div className="font-medium text-[#1E1B4B] mb-2">Resumo da importação</div>
+                <div className="font-medium text-navy mb-2">Resumo da importação</div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Produtos importados</span>
                   <span className={`font-medium ${prodCount > 0 ? 'text-emerald-600' : 'text-zinc-400'}`}>

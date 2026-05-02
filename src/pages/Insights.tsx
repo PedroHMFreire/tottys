@@ -74,7 +74,7 @@ export default function Insights() {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
       <div className="sticky top-0 bg-white border-b px-4 py-3 z-10 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[#1E1B4B]">Insights</h1>
+        <h1 className="text-lg font-semibold text-navy">Insights</h1>
         <Button onClick={load} disabled={loading || !company?.id}>
           {loading ? 'Analisando...' : 'Atualizar'}
         </Button>

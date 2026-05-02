@@ -265,7 +265,7 @@ export default function PostSaleModal({ data, onClose }: Props) {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
             <span className="text-sm font-semibold text-slate-800">Venda finalizada</span>
-            <span className="text-sm font-bold text-[#1E40AF]">{formatBRL(data.total)}</span>
+            <span className="text-sm font-bold text-azure">{formatBRL(data.total)}</span>
           </div>
           <button
             onClick={onClose}
@@ -284,9 +284,9 @@ export default function PostSaleModal({ data, onClose }: Props) {
 
               <button
                 onClick={emitFiscal}
-                className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-[#1E40AF] hover:bg-[#EFF6FF] transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-azure hover:bg-navy-ghost transition-colors cursor-pointer text-left"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#1E40AF] flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
                   <FileText size={18} className="text-white" />
                 </div>
                 <div>
@@ -348,7 +348,7 @@ export default function PostSaleModal({ data, onClose }: Props) {
             <div className="p-6 flex flex-col items-center gap-4">
               {emitting ? (
                 <>
-                  <Loader2 size={32} className="text-[#1E40AF] animate-spin" />
+                  <Loader2 size={32} className="text-azure animate-spin" />
                   <div className="text-sm font-medium text-slate-700">Comunicando com SEFAZ…</div>
                   <div className="text-xs text-slate-400">Aguarde a autorização da NFC-e</div>
                 </>
@@ -364,7 +364,7 @@ export default function PostSaleModal({ data, onClose }: Props) {
                   <div className="grid grid-cols-2 gap-2 w-full">
                     <button
                       onClick={emitFiscal}
-                      className="h-11 rounded-xl border border-[#1E40AF] text-[#1E40AF] text-sm font-medium hover:bg-[#EFF6FF] cursor-pointer transition-colors"
+                      className="h-11 rounded-xl border border-azure text-azure text-sm font-medium hover:bg-navy-ghost cursor-pointer transition-colors"
                     >
                       Tentar novamente
                     </button>
@@ -441,7 +441,7 @@ export default function PostSaleModal({ data, onClose }: Props) {
                       value={emailAddr}
                       onChange={e => { setEmailAddr(e.target.value); setEmailError(null) }}
                       placeholder="cliente@email.com"
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E40AF] transition-colors"
+                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure transition-colors"
                       autoFocus
                     />
                     {emailError && (
@@ -524,7 +524,7 @@ export default function PostSaleModal({ data, onClose }: Props) {
             </button>
             <button
               onClick={handlePrint}
-              className="h-11 flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] text-white text-sm font-semibold hover:bg-[#1E3A8A] cursor-pointer transition-colors"
+              className="h-11 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-azure-dark cursor-pointer transition-colors"
             >
               <Printer size={15} />
               Imprimir

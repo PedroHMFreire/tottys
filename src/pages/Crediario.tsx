@@ -74,7 +74,7 @@ export default function Crediario() {
     <div className="max-w-5xl mx-auto p-4 sm:p-6">
       <div className="sticky top-0 bg-white border-b px-4 py-3 z-10">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-semibold text-[#1E1B4B]">Crediário</h1>
+          <h1 className="text-lg font-semibold text-navy">Crediário</h1>
           <Link to="/cobranca" className="text-xs border rounded-xl px-3 py-1 text-green-700 border-green-300 bg-green-50 hover:bg-green-100">
             Cobrar WhatsApp
           </Link>
@@ -82,7 +82,7 @@ export default function Crediario() {
         <div className="flex gap-2">
           <button
             onClick={() => setTab('aberto')}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium border cursor-pointer transition-colors ${tab === 'aberto' ? 'bg-[#1E40AF] text-white border-[#1E40AF]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium border cursor-pointer transition-colors ${tab === 'aberto' ? 'bg-primary text-white border-azure' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
           >
             Em Aberto
           </button>

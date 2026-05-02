@@ -10,6 +10,7 @@ import {
   Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag, ExternalLink,
   MessageSquare, type LucideIcon,
 } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // area: área necessária para ver o item. null = visível para todos autenticados.
 type NavItem  = { to: string; label: string; Icon: LucideIcon; area?: string }
@@ -108,7 +109,7 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
 
       {/* Logo */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-slate-100 shrink-0">
-        <span className="font-display text-[1.1rem] font-semibold text-[#1E1B4B] tracking-tight select-none">
+        <span className="font-display text-[1.1rem] font-semibold text-navy tracking-tight select-none">
           Tottys
         </span>
         <button
@@ -140,7 +141,7 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
           onClick={openPDV}
           disabled={!store?.id}
           title={!store?.id ? 'Selecione uma loja para abrir o PDV' : `Abrir PDV — ${store?.nome}`}
-          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-[#1E40AF] hover:bg-[#1E3A8A] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors cursor-pointer"
+          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors cursor-pointer"
         >
           <ShoppingBag size={15} strokeWidth={2.2} />
           <span className="flex-1 text-left">Abrir PDV</span>
@@ -169,7 +170,7 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
                       isActive
-                        ? 'bg-[#EFF6FF] text-[#1E40AF]'
+                        ? 'bg-navy-ghost text-azure'
                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                     }`
                   }
@@ -190,7 +191,7 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
       {/* User footer */}
       <div className="border-t border-slate-100 p-3 shrink-0">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-7 h-7 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-xs font-bold text-[#1E40AF] shrink-0">
+          <div className="w-7 h-7 rounded-full bg-navy-ghost border border-blue-200 flex items-center justify-center text-xs font-bold text-azure shrink-0">
             {(userName.charAt(0) || 'U').toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
@@ -200,13 +201,16 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
             )}
           </div>
         </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
-        >
-          <LogOut size={12} />
-          Sair da conta
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={logout}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+          >
+            <LogOut size={12} />
+            Sair da conta
+          </button>
+          <ThemeToggle size="sm" />
+        </div>
       </div>
     </div>
   )
@@ -239,7 +243,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+    <div className="flex h-screen bg-surface-2 overflow-hidden">
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex shrink-0">
@@ -278,14 +282,15 @@ export default function AdminLayout() {
                 <span className="text-sm font-medium text-slate-600 truncate">{company.nome}</span>
               </>
             ) : (
-              <span className="font-display text-[1rem] font-semibold text-[#1E1B4B]">Tottys</span>
+              <span className="font-display text-[1rem] font-semibold text-navy">Tottys</span>
             )}
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs text-slate-400 hidden sm:block max-w-[140px] truncate">
               {userName}
             </span>
+            <ThemeToggle size="sm" />
             <button
               onClick={logout}
               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"

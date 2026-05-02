@@ -173,7 +173,7 @@ export default function AdminCompanies() {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-[#1E1B4B]">Empresas</h1>
+        <h1 className="text-lg font-semibold text-navy">Empresas</h1>
         <Button onClick={() => setShowNew(true)}>Nova empresa</Button>
       </div>
 
@@ -197,7 +197,7 @@ export default function AdminCompanies() {
                       <button onClick={() => setEditingId(null)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">Cancelar</button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(c)} className="text-xs text-slate-400 hover:text-[#1E40AF] cursor-pointer">Editar</button>
+                    <button onClick={() => startEdit(c)} className="text-xs text-slate-400 hover:text-azure cursor-pointer">Editar</button>
                   )}
                 </div>
 
@@ -206,7 +206,7 @@ export default function AdminCompanies() {
                     <div>
                       <div className="text-xs text-slate-400 mb-1">Nome *</div>
                       <input
-                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                         value={editMap[c.id]?.nome || ''}
                         onChange={e => setEditMap(p => ({ ...p, [c.id]: { ...p[c.id], nome: e.target.value } }))}
                       />
@@ -214,7 +214,7 @@ export default function AdminCompanies() {
                     <div>
                       <div className="text-xs text-slate-400 mb-1">CNPJ</div>
                       <input
-                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                         value={editMap[c.id]?.cnpj || ''}
                         onChange={e => setEditMap(p => ({ ...p, [c.id]: { ...p[c.id], cnpj: maskCNPJ(e.target.value) } }))}
                         placeholder="00.000.000/0000-00"
@@ -223,7 +223,7 @@ export default function AdminCompanies() {
                     <div>
                       <div className="text-xs text-slate-400 mb-1">Regime Tributário</div>
                       <select
-                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF] bg-white"
+                        className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure bg-white"
                         value={editMap[c.id]?.regime || ''}
                         onChange={e => setEditMap(p => ({ ...p, [c.id]: { ...p[c.id], regime: e.target.value } }))}
                       >
@@ -239,7 +239,7 @@ export default function AdminCompanies() {
                           <div className="text-xs text-slate-400 mb-1">Email remetente (Gmail)</div>
                           <input
                             type="email"
-                            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                             value={editMap[c.id]?.email_remetente || ''}
                             onChange={e => setEditMap(p => ({ ...p, [c.id]: { ...p[c.id], email_remetente: e.target.value } }))}
                             placeholder="loja@gmail.com"
@@ -248,7 +248,7 @@ export default function AdminCompanies() {
                         <div>
                           <div className="text-xs text-slate-400 mb-1">Nome exibido no email</div>
                           <input
-                            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                             value={editMap[c.id]?.email_nome || ''}
                             onChange={e => setEditMap(p => ({ ...p, [c.id]: { ...p[c.id], email_nome: e.target.value } }))}
                             placeholder="Nome da Loja"
@@ -258,7 +258,7 @@ export default function AdminCompanies() {
                           <div className="text-xs text-slate-400 mb-1">Senha de app do Gmail</div>
                           <input
                             type="password"
-                            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                            className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                             value={editMap[c.id]?.email_senha_app || ''}
                             onChange={e => setEditMap(p => ({ ...p, [c.id]: { ...p[c.id], email_senha_app: e.target.value } }))}
                             placeholder="xxxx xxxx xxxx xxxx"
@@ -272,7 +272,7 @@ export default function AdminCompanies() {
                   </div>
                 ) : (
                   <div className="space-y-1 text-sm">
-                    <div className="font-medium text-[#1E1B4B]">{c.nome}</div>
+                    <div className="font-medium text-navy">{c.nome}</div>
                     <div className="text-xs text-slate-500">
                       {c.cnpj ? maskCNPJ(c.cnpj) : 'CNPJ não informado'}
                       {c.regime_tributario ? ` · ${c.regime_tributario}` : ''}
@@ -301,7 +301,7 @@ export default function AdminCompanies() {
             <div>
               <div className="text-xs text-slate-400 mb-1">Nome *</div>
               <input
-                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                 value={nome}
                 onChange={e => setNome(e.target.value)}
                 placeholder="Nome da empresa"
@@ -310,7 +310,7 @@ export default function AdminCompanies() {
             <div>
               <div className="text-xs text-slate-400 mb-1">CNPJ</div>
               <input
-                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                 value={cnpj}
                 onChange={e => setCnpj(maskCNPJ(e.target.value))}
                 placeholder="00.000.000/0000-00"
@@ -319,7 +319,7 @@ export default function AdminCompanies() {
             <div>
               <div className="text-xs text-slate-400 mb-1">Regime Tributário</div>
               <select
-                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF] bg-white"
+                className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure bg-white"
                 value={regime}
                 onChange={e => setRegime(e.target.value)}
               >
@@ -338,7 +338,7 @@ export default function AdminCompanies() {
                   <div>
                     <div className="text-xs text-slate-400 mb-1">Nome da loja</div>
                     <input
-                      className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF]"
+                      className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure"
                       value={storeName}
                       onChange={e => setStoreName(e.target.value)}
                     />
@@ -346,7 +346,7 @@ export default function AdminCompanies() {
                   <div>
                     <div className="text-xs text-slate-400 mb-1">Estado (UF) *</div>
                     <select
-                      className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-[#1E40AF] bg-white"
+                      className="w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:border-azure bg-white"
                       value={storeUf}
                       onChange={e => setStoreUf(e.target.value)}
                     >

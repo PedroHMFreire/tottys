@@ -272,7 +272,7 @@ export default function Cash() {
   return (
     <div className="pb-24 md:pb-8 max-w-4xl mx-auto p-4 sm:p-6 space-y-4">
       <Toast toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
-      <h1 className="text-lg font-semibold text-[#1E1B4B]">Caixa</h1>
+      <h1 className="text-lg font-semibold text-navy">Caixa</h1>
 
       {!store && (
         <div className="rounded-2xl border p-3 bg-amber-50 text-amber-900 text-sm">
@@ -294,7 +294,7 @@ export default function Cash() {
                 step="0.01"
                 value={valorInicial}
                 onChange={e => setValorInicial(e.target.value)}
-                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Valor inicial"
               />
               <Button onClick={abrirCaixa} disabled={loading || !store}>Abrir</Button>
@@ -364,14 +364,14 @@ export default function Cash() {
                 step="0.01"
                 value={movValor}
                 onChange={e => setMovValor(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Valor"
               />
             </div>
             <input
               value={movMotivo}
               onChange={e => setMovMotivo(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white mb-2"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white mb-2"
               placeholder="Motivo (ex.: troco, segurança, acerto)"
             />
             <Button onClick={registrarMovimento} disabled={loading || Number(movValor) <= 0}>Registrar</Button>
@@ -387,7 +387,7 @@ export default function Cash() {
                   step="0.01"
                   value={valorContado}
                   onChange={e => setValorContado(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 />
               </div>
               <Button onClick={fecharCaixa} disabled={loading || lockedClose}>Fechar</Button>

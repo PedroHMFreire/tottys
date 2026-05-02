@@ -185,13 +185,13 @@ export default function DescontoModal({ companyId, cartTotal, role, onApply, onR
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setManualTipo('PERCENTUAL')}
-                className={`py-2 rounded-xl border text-sm font-medium ${manualTipo === 'PERCENTUAL' ? 'bg-[#1E40AF] text-white' : 'border-zinc-200'}`}
+                className={`py-2 rounded-xl border text-sm font-medium ${manualTipo === 'PERCENTUAL' ? 'bg-primary text-white' : 'border-zinc-200'}`}
               >
                 Percentual (%)
               </button>
               <button
                 onClick={() => setManualTipo('VALOR_FIXO')}
-                className={`py-2 rounded-xl border text-sm font-medium ${manualTipo === 'VALOR_FIXO' ? 'bg-[#1E40AF] text-white' : 'border-zinc-200'}`}
+                className={`py-2 rounded-xl border text-sm font-medium ${manualTipo === 'VALOR_FIXO' ? 'bg-primary text-white' : 'border-zinc-200'}`}
               >
                 Valor fixo (R$)
               </button>
@@ -201,14 +201,14 @@ export default function DescontoModal({ companyId, cartTotal, role, onApply, onR
                 value={manualPct}
                 onChange={e => setManualPct(e.target.value)}
                 placeholder="Ex: 10 (para 10%)"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
               />
             ) : (
               <input
                 value={manualFixed}
                 onChange={e => setManualFixed(e.target.value)}
                 placeholder="Ex: 30,00"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
               />
             )}
             <Button onClick={applyManual}>Aplicar desconto manual</Button>

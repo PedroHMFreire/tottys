@@ -4,7 +4,7 @@ import Button from '@/ui/Button'
 export default function NotFound() {
   const navigate = useNavigate()
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-zinc-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-white to-zinc-50 dark:from-slate-900 dark:to-slate-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md text-center space-y-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Página não encontrada</h1>

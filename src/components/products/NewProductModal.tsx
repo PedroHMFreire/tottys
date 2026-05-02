@@ -191,7 +191,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={sku}
                 onChange={e=>setSku(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: VEST-FLORAL-001"
               />
             </div>
@@ -200,7 +200,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={nome}
                 onChange={e=>setNome(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: Vestido Floral Ref. 001"
               />
             </div>
@@ -209,7 +209,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={barcode}
                 onChange={e=>setBarcode(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="EAN/GTIN"
               />
             </div>
@@ -218,7 +218,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={unidade}
                 onChange={e=>setUnidade(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="UN"
               />
             </div>
@@ -232,7 +232,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={preco}
                 onChange={e=>setPreco(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: 119,90"
               />
             </div>
@@ -241,7 +241,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={custo}
                 onChange={e=>setCusto(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: 49,90"
               />
             </div>
@@ -299,7 +299,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
                     value={estoqueInicial}
                     onChange={e => setEstoqueInicial(e.target.value)}
                     placeholder="0"
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                   />
                 ) : (
                   <div className="rounded-xl border border-amber-100 bg-amber-50 text-amber-700 text-xs px-3 py-2">
@@ -318,7 +318,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={marca}
                 onChange={e=>setMarca(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: SANTÉ"
               />
             </div>
@@ -327,7 +327,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={categoria}
                 onChange={e=>setCategoria(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: Vestidos"
               />
             </div>
@@ -342,7 +342,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={ncm}
                 onChange={e=>setNcm(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: 6109.10.00"
               />
             </div>
@@ -351,7 +351,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={cfop}
                 onChange={e=>setCfop(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: 5102"
               />
             </div>
@@ -360,7 +360,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={cest}
                 onChange={e=>setCest(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Opcional"
               />
             </div>
@@ -369,7 +369,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={origem}
                 onChange={e=>setOrigem(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: 0"
               />
             </div>
@@ -378,7 +378,7 @@ export default function NewProductModal({ companyId, storeId, onClose, onSaved, 
               <input
                 value={grupo}
                 onChange={e=>setGrupo(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-[#1E1B4B] placeholder-slate-400 focus:outline-none focus:border-[#1E40AF] transition-colors bg-white"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy placeholder-slate-400 focus:outline-none focus:border-azure transition-colors bg-white"
                 placeholder="Ex.: Simples/CSOSN"
               />
             </div>
