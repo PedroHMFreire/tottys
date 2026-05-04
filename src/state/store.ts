@@ -1,7 +1,19 @@
 
 import { create } from 'zustand'
 import type { Product, SaleItem, Store, User, Customer, Company, Role } from '@/domain/types'
+import type { Plan, SubscriptionStatus } from '@/domain/plans'
 import { nanoid } from '@/ui/nanoid'
+
+export interface Subscription {
+  id: string
+  company_id: string
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
+  plan: Plan
+  status: SubscriptionStatus
+  trial_ends_at?: string | null
+  current_period_end?: string | null
+}
 
 export interface AppState {
   user?: User
@@ -14,6 +26,9 @@ export interface AppState {
   role: Role
   areas: string[]
   permissionsLoaded: boolean
+  // Assinatura
+  subscription?: Subscription
+  subscriptionLoaded: boolean
   setUser: (u?: User) => void
   setCompany: (c?: Company) => void
   setStore: (s?: Store) => void
@@ -24,6 +39,7 @@ export interface AppState {
   setQty: (id: string, qty: number) => void
   setPermissions: (role: Role, areas: string[]) => void
   clearPermissions: () => void
+  setSubscription: (s?: Subscription) => void
 }
 
 const storedCompany = (() => {
@@ -53,8 +69,11 @@ export const useApp = create<AppState>((set, get) => ({
   role: 'ANON',
   areas: [],
   permissionsLoaded: false,
+  subscription: undefined,
+  subscriptionLoaded: false,
   setPermissions: (role, areas) => set({ role, areas, permissionsLoaded: true }),
-  clearPermissions: () => set({ role: 'ANON', areas: [], permissionsLoaded: false }),
+  clearPermissions: () => set({ role: 'ANON', areas: [], permissionsLoaded: false, subscription: undefined, subscriptionLoaded: false }),
+  setSubscription: (subscription) => set({ subscription, subscriptionLoaded: true }),
   setUser: (user) => set({ user }),
   setCompany: (company) => {
     if (company) {

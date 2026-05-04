@@ -24,7 +24,6 @@ import NPSDashboard from '@/pages/NPSDashboard'
 
 // ADM (retaguarda)
 import AdminDashboard from '@/pages/AdminDashboard'
-import StockAdmin from '@/pages/StockAdmin'
 import Collections from '@/pages/Collections'
 import Customers from '@/pages/Customers'
 import Crediario from '@/pages/Crediario'
@@ -35,6 +34,9 @@ import CashbackConfig from '@/pages/CashbackConfig'
 import Labels from '@/pages/Labels'
 import Financeiro from '@/pages/Financeiro'
 import ContasPagar from '@/pages/ContasPagar'
+import Conta from '@/pages/Conta'
+import Bloqueado from '@/pages/Bloqueado'
+import Landing from '@/pages/Landing'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -45,11 +47,12 @@ import RequireStore from './components/auth/RequireStore'
 
 const router = createBrowserRouter([
   // Página inicial = Login
-  { path: '/', element: <Login /> },
+  { path: '/', element: <Landing /> },
   { path: '/login', element: <Login /> },
   { path: '/onboarding', element: <Onboarding /> },
   { path: '/gate', element: <Gate /> },
   { path: '/nps', element: <NPS /> },
+  { path: '/bloqueado', element: <Bloqueado /> },
 
   // ── Grupo LOJA (PDV) — requer empresa/loja selecionada ────────────────────
   { path: '/loja',          element: <RequireCompany><Home /></RequireCompany> },
@@ -89,6 +92,7 @@ const router = createBrowserRouter([
       { path: '/adm/store',        element: <SelectStore /> },
       { path: '/adm/users',        element: <AdminUsers /> },
       { path: '/adm/nps',          element: <NPSDashboard /> },
+      { path: '/adm/conta',        element: <Conta /> },
 
       // Rotas funcionais
       { path: '/products',     element: <Products /> },

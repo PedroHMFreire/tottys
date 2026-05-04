@@ -10,6 +10,7 @@ tsconfig.tsbuildinfo
 
 # Supabase
 supabase/.temp/
+supabase/set-secrets.sh
 
 # Claude Code memory
 .claude/

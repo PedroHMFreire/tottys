@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
 import { useRole } from '@/hooks/useRole'
 import { useAreas } from '@/hooks/useAreas'
+import { useSubscription } from '@/hooks/useSubscription'
 import {
   LayoutDashboard, Package, Warehouse, BarChart3, Users, CreditCard,
   Bell, Star, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
@@ -60,9 +61,10 @@ const NAV: NavGroup[] = [
   {
     group: 'Configurações',
     items: [
-      { to: '/adm/users',    label: 'Usuários', Icon: UserCog, area: 'USERS'  },
-      { to: '/adm/stores',   label: 'Lojas',    Icon: Store,   area: 'CONFIG' },
-      { to: '/adm/settings', label: 'Config',   Icon: Settings,area: 'CONFIG' },
+      { to: '/adm/users',    label: 'Usuários',    Icon: UserCog,    area: 'USERS'  },
+      { to: '/adm/stores',   label: 'Lojas',       Icon: Store,      area: 'CONFIG' },
+      { to: '/adm/settings', label: 'Config',      Icon: Settings,   area: 'CONFIG' },
+      { to: '/adm/conta',    label: 'Minha Conta', Icon: CreditCard              },
     ],
   },
 ]
@@ -221,6 +223,7 @@ export default function AdminLayout() {
   const { company, setCompany } = useApp()
   const navigate  = useNavigate()
   const [userName, setUserName] = useState('')
+  const { isBlocked, loading: subLoading } = useSubscription()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -236,6 +239,10 @@ export default function AdminLayout() {
       if (data && data.length > 0) setCompany(data[0] as any)
     })
   }, [company?.id, setCompany])
+
+  useEffect(() => {
+    if (!subLoading && isBlocked) navigate('/bloqueado', { replace: true })
+  }, [isBlocked, subLoading])
 
   async function logout() {
     await supabase.auth.signOut()

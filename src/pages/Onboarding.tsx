@@ -55,7 +55,6 @@ export default function Onboarding() {
   const [companyRegime, setCompanyRegime] = useState('')
   const [storeName, setStoreName] = useState('Loja Principal')
   const [storeUf, setStoreUf] = useState('')
-  const [storeCity, setStoreCity] = useState('')
   const [caixaInicial, setCaixaInicial] = useState('')
 
   // Created IDs (passed to import steps)
@@ -174,6 +173,18 @@ export default function Onboarding() {
           abertura_at: new Date().toISOString(),
         })
       }
+
+      // Inicia trial de 14 dias
+      await supabase.rpc('create_trial_subscription', { p_company_id: cId })
+
+      // Email de boas-vindas (fire-and-forget)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session?.access_token) return
+        fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/email-welcome`,
+          { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` } },
+        ).catch(() => {})
+      })
 
       setCompanyId(cId)
       setStoreId(sId)

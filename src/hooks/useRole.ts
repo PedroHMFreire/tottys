@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { Role } from '@/domain/types'
 import { useApp } from '@/state/store'
+import { captureError, setUserContext, clearUserContext } from '@/lib/sentry'
 
 export function useRole() {
-  const { role, permissionsLoaded, setPermissions, areas } = useApp()
+  const { role, permissionsLoaded, setPermissions } = useApp()
 
   useEffect(() => {
     if (permissionsLoaded) return
@@ -21,11 +22,15 @@ export function useRole() {
           supabase.rpc('get_my_areas'),
         ])
         if (!mounted) return
+        if (profileRes.error) captureError(profileRes.error, { context: 'useRole/profiles' })
+        if (areasRes.error)   captureError(areasRes.error,   { context: 'useRole/get_my_areas' })
         const fetchedRole = (profileRes.data?.role as Role) || 'COLABORADOR'
         const fetchedAreas: string[] = ((areasRes.data || []) as Array<{ area_code: string }>)
           .map(r => r.area_code)
         setPermissions(fetchedRole, Array.from(new Set(fetchedAreas)))
-      } catch {
+        setUserContext(user.id, user.email)
+      } catch (err) {
+        captureError(err, { context: 'useRole/init' })
         if (mounted) setPermissions('ANON', [])
       }
     })()
@@ -36,6 +41,7 @@ export function useRole() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         useApp.getState().clearPermissions()
+        clearUserContext()
       }
     })
     return () => sub?.subscription?.unsubscribe?.()

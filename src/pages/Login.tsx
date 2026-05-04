@@ -28,7 +28,9 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [phone, setPhone]       = useState('')
-  const [mode, setMode]         = useState<'login' | 'signup'>('login')
+  const [mode, setMode]         = useState<'login' | 'signup'>(
+    searchParams.get('modo') === 'signup' ? 'signup' : 'login'
+  )
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading]   = useState(false)
   const [msg, setMsg]           = useState<string | null>(null)
