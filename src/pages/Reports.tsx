@@ -131,7 +131,7 @@ const MEIO_LABEL: Record<string, string> = {
 }
 
 export default function Reports() {
-  const { store, company, setCompany } = useApp()
+  const { store, company, setCompany, user } = useApp()
   const { role } = useRole()
   const { isDark } = useTheme()
   const { pathname } = useLocation()
@@ -148,10 +148,15 @@ export default function Reports() {
     return map
   }, [companies])
 
-  const [tab, setTab] = useState<'oper' | 'gestao' | 'moda'>('oper')
+  // No PDV: abre na aba de performance por vendedor e filtra pelo usuário logado
+  const [tab, setTab] = useState<'oper' | 'gestao' | 'moda'>(isPDV ? 'gestao' : 'oper')
   const [from, setFrom] = useState<string>(toISODate(startOfToday()))
   const [to, setTo] = useState<string>(toISODate(endOfToday()))
   const [seller, setSeller] = useState<string>('')
+
+  useEffect(() => {
+    if (isPDV && user?.id && !seller) setSeller(user.id)
+  }, [isPDV, user?.id])
   const [comparePrev, setComparePrev] = useState(false)
   const [prevKpis, setPrevKpis] = useState<KpiRow[]>([])
 
@@ -565,7 +570,24 @@ export default function Reports() {
   // ── JSX ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="pb-20">
+    <div className={isPDV ? 'pb-24' : 'pb-20'}>
+
+      {/* Banner PDV — contexto do vendedor */}
+      {isPDV && (
+        <div className="bg-blue-50 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900 px-4 py-2.5 flex items-center justify-between gap-3">
+          <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+            Exibindo <strong>suas vendas</strong>. Para ver toda a loja, limpe o filtro de vendedor.
+          </p>
+          {seller && (
+            <button
+              onClick={() => setSeller('')}
+              className="text-xs text-blue-500 hover:text-blue-700 font-semibold underline shrink-0"
+            >
+              Ver todos
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Sticky filter bar ── */}
       <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-100 shadow-sm">

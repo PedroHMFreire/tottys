@@ -30,7 +30,6 @@ const MODULES: ModuleItem[] = [
   { label: 'Clientes',     to: '/customers',          Icon: Users,       color: 'text-blue-400',   bg: 'bg-blue-900/40' },
   { label: 'Estoque',      to: '/loja/stock',          Icon: Warehouse,   color: 'text-amber-400',  bg: 'bg-amber-900/40' },
   { label: 'Produtos',     to: '/loja/products',       Icon: Package,     color: 'text-violet-400', bg: 'bg-violet-900/40' },
-  { label: 'Relatórios',   to: '/loja/reports',        Icon: BarChart3,   color: 'text-teal-400',   bg: 'bg-teal-900/40' },
   { label: 'Crediário',    to: '/crediario',           Icon: CreditCard,  color: 'text-rose-400',   bg: 'bg-rose-900/40' },
   { label: 'Aniversários', to: '/customers?tab=aniv',  Icon: Cake,        color: 'text-pink-400',   bg: 'bg-pink-900/40' },
   { label: 'NPS',          to: '/nps',                 Icon: Star,        color: 'text-yellow-400', bg: 'bg-yellow-900/40' },
@@ -223,20 +222,20 @@ export default function Home() {
           bg="bg-amber-900/30"
         />
         <QuickLink
+          to="/loja/reports"
+          Icon={BarChart3}
+          label="Relatórios"
+          sub="Vendas, produtos e histórico"
+          color="text-teal-400"
+          bg="bg-teal-900/30"
+        />
+        <QuickLink
           to="/loja/cash"
           Icon={Landmark}
           label="Caixa"
           sub="Abrir, fechar e suprimentos"
           color="text-emerald-400"
           bg="bg-emerald-900/30"
-        />
-        <QuickLink
-          to="/crediario"
-          Icon={CreditCard}
-          label="Crediário"
-          sub="Consultar dívidas e parcelas"
-          color="text-rose-400"
-          bg="bg-rose-900/30"
         />
       </section>
 
