@@ -28,6 +28,7 @@ const NAV: NavGroup[] = [
     group: 'Vendas',
     items: [
       { to: '/adm/reports',     label: 'Relatórios', Icon: BarChart3, area: 'RELATORIOS'  },
+      { to: '/adm/metas',       label: 'Metas',      Icon: Star,      area: 'RELATORIOS'  },
       { to: '/adm/collections', label: 'Coleções',   Icon: Layers,   area: 'PRODUTOS'    },
       { to: '/adm/promocoes',   label: 'Promoções',  Icon: Tag,      area: 'PRODUTOS'    },
     ],

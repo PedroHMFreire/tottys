@@ -37,6 +37,8 @@ import ContasPagar from '@/pages/ContasPagar'
 import Conta from '@/pages/Conta'
 import Bloqueado from '@/pages/Bloqueado'
 import Landing from '@/pages/Landing'
+import Performance from '@/pages/Performance'
+import Metas from '@/pages/Metas'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -62,8 +64,9 @@ const router = createBrowserRouter([
   { path: '/loja/reports',  element: <RequireCompany><Reports /></RequireCompany> },
   { path: '/loja/stock',    element: <RequireCompany><Stock /></RequireCompany> },
   { path: '/loja/settings', element: <RequireCompany><Settings /></RequireCompany> },
-  { path: '/loja/store',    element: <SelectStore /> },
-  { path: '/loja/company',  element: <SelectCompany /> },
+  { path: '/loja/store',       element: <SelectStore /> },
+  { path: '/loja/company',     element: <SelectCompany /> },
+  { path: '/loja/performance', element: <RequireCompany><Performance /></RequireCompany> },
 
   // Aliases legados PDV
   { path: '/sell',    element: <RequireCompany><RequireStore><Sell /></RequireStore></RequireCompany> },
@@ -93,6 +96,7 @@ const router = createBrowserRouter([
       { path: '/adm/users',        element: <AdminUsers /> },
       { path: '/adm/nps',          element: <NPSDashboard /> },
       { path: '/adm/conta',        element: <Conta /> },
+      { path: '/adm/metas',        element: <Metas /> },
 
       // Rotas funcionais
       { path: '/products',     element: <Products /> },

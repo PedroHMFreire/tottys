@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ShoppingCart, Landmark, Users, CreditCard, Wallet } from 'lucide-react'
+import { ShoppingCart, Landmark, Users, CreditCard, Trophy } from 'lucide-react'
 
 const tabs = [
-  { to: '/loja/sell',  label: 'Vender',     Icon: ShoppingCart },
-  { to: '/loja/cash',  label: 'Caixa',      Icon: Landmark },
-  { to: '/customers',  label: 'Clientes',   Icon: Users },
-  { to: '/crediario',  label: 'Crediário',  Icon: CreditCard },
-  { to: '/financeiro', label: 'Financeiro', Icon: Wallet },
+  { to: '/loja/sell',        label: 'Vender',      Icon: ShoppingCart },
+  { to: '/loja/cash',        label: 'Caixa',       Icon: Landmark },
+  { to: '/customers',        label: 'Clientes',    Icon: Users },
+  { to: '/crediario',        label: 'Crediário',   Icon: CreditCard },
+  { to: '/loja/performance', label: 'Performance', Icon: Trophy },
 ]
 
 export default function TabBar() {
