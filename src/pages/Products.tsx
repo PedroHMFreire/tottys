@@ -3,12 +3,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { supabase } from '@/lib/supabaseClient';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import Button from '@/ui/Button';
 import Card from '@/ui/Card';
 import ImportBatchModal from '@/components/products/ImportBatchModal';
 import NewProductModal from '@/components/products/NewProductModal';
 import { useApp } from '@/state/store';
+import TabBar from '@/ui/TabBar';
 
 type Product = {
   id: string;
@@ -254,6 +255,8 @@ function EditableProductRow({ product, onUpdate, onDelete }: EditableProductRowP
 export default function Products() {
   const [searchParams] = useSearchParams();
   const { company, setCompany, store } = useApp();
+  const { pathname } = useLocation();
+  const isPDV = !pathname.startsWith('/adm');
 
   const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -517,6 +520,7 @@ export default function Products() {
           storeId={store?.id ?? null}
         />
       )}
+      {isPDV && <TabBar />}
     </div>
   );
 }

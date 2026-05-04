@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
 import { useRole } from '@/hooks/useRole'
@@ -9,6 +10,7 @@ import ImportBatchModal from '@/components/products/ImportBatchModal'
 import NewProductModal from '@/components/products/NewProductModal'
 import ReposicaoModal from '@/components/stock/ReposicaoModal'
 import RomaneioModal from '@/components/stock/RomaneioModal'
+import TabBar from '@/ui/TabBar'
 import * as XLSX from 'xlsx'
 
 type Store = { id: string; nome: string; company_id?: string | null }
@@ -110,6 +112,8 @@ function KpiCard({
 export default function Stock() {
   const { store, company, setCompany } = useApp()
   const { role } = useRole()
+  const { pathname } = useLocation()
+  const isPDV = !pathname.startsWith('/adm')
   const isOwner = role === 'OWNER'
 
   const [scope, setScope] = useState<'company' | 'global'>('company')
@@ -1258,6 +1262,7 @@ export default function Stock() {
           onSuccess={() => { setTransferProd(null); alert('Transferência solicitada com sucesso.') }}
         />
       )}
+      {isPDV && <TabBar />}
     </div>
   )
 }

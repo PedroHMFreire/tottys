@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
 import Button from '@/ui/Button'
@@ -7,6 +8,7 @@ import { formatBRL } from '@/lib/currency'
 import Toast, { type ToastItem } from '@/ui/Toast'
 import { logActivity } from '@/lib/activity'
 import { isUUID } from '@/lib/utils'
+import TabBar from '@/ui/TabBar'
 
 type CashRow = {
   id: string
@@ -395,6 +397,7 @@ export default function Cash() {
           </Card>
         </>
       )}
+      <TabBar />
     </div>
   )
 }

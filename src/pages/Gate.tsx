@@ -14,7 +14,7 @@ export default function Gate() {
     } else if (role === 'OWNER' || role === 'ADMIN' || role === 'GERENTE') {
       navigate('/adm', { replace: true })
     } else {
-      navigate('/loja/sell', { replace: true })
+      navigate('/loja', { replace: true })
     }
   }, [role, loading, navigate])
 

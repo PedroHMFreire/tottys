@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   AreaChart, Area, BarChart, Bar, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -12,6 +13,7 @@ import KPI from '@/ui/KPI'
 import { movingAverage, simpleForecast } from '@/domain/reports/predict'
 import { formatBRL } from '@/lib/currency'
 import { RefreshCw, TrendingUp, TrendingDown } from 'lucide-react'
+import TabBar from '@/ui/TabBar'
 import { useTheme } from '@/hooks/useTheme'
 
 type KpiRow = {
@@ -132,6 +134,8 @@ export default function Reports() {
   const { store, company, setCompany } = useApp()
   const { role } = useRole()
   const { isDark } = useTheme()
+  const { pathname } = useLocation()
+  const isPDV = !pathname.startsWith('/adm')
   const isOwner = role === 'OWNER'
   const [scope, setScope] = useState<'company' | 'global'>('company')
   const [companies, setCompanies] = useState<Array<{ id: string; nome: string }>>([])
@@ -1396,6 +1400,7 @@ export default function Reports() {
           </Card>
         )}
       </div>
+      {isPDV && <TabBar />}
     </div>
   )
 }
