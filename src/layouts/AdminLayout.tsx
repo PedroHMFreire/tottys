@@ -7,9 +7,9 @@ import { useAreas } from '@/hooks/useAreas'
 import { useSubscription } from '@/hooks/useSubscription'
 import {
   LayoutDashboard, Package, Warehouse, BarChart3, Users, CreditCard,
-  Bell, Star, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
+  Bell, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
   Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag,
-  MessageSquare, UserCheck, Gift, Target, type LucideIcon,
+  MessageSquare, UserCheck, Gift, Target, ContactRound, type LucideIcon,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -46,6 +46,7 @@ const NAV: NavGroup[] = [
   {
     group: 'Clientes',
     items: [
+      { to: '/adm/crm',      label: 'CRM',      Icon: ContactRound,  area: 'CLIENTES' },
       { to: '/customers',    label: 'Clientes', Icon: Users,         area: 'CLIENTES' },
       { to: '/adm/cashback', label: 'Cashback', Icon: Gift,          area: 'CASHBACK' },
       { to: '/adm/nps',      label: 'Pesquisas', Icon: MessageSquare, area: 'INSIGHTS' },

@@ -40,6 +40,8 @@ import Landing from '@/pages/Landing'
 import Performance from '@/pages/Performance'
 import Metas from '@/pages/Metas'
 import Vendedores from '@/pages/Vendedores'
+import CRM from '@/pages/CRM'
+import CustomerProfile from '@/pages/CustomerProfile'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -99,13 +101,15 @@ const router = createBrowserRouter([
       { path: '/adm/conta',        element: <Conta /> },
       { path: '/adm/metas',        element: <Metas /> },
       { path: '/adm/vendedores',   element: <Vendedores /> },
+      { path: '/adm/crm',          element: <CRM /> },
 
       // Rotas funcionais
       { path: '/products',     element: <Products /> },
       { path: '/reports',      element: <Reports /> },
       { path: '/settings',     element: <Settings /> },
       { path: '/collections',  element: <Collections /> },
-      { path: '/customers',    element: <Customers /> },
+      { path: '/customers',        element: <Customers /> },
+      { path: '/customers/:id',    element: <CustomerProfile /> },
       { path: '/crediario',    element: <Crediario /> },
       { path: '/cobranca',     element: <Cobranca /> },
       { path: '/cashback',     element: <CashbackConfig /> },
