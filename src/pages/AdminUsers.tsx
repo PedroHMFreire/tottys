@@ -6,7 +6,7 @@ import { useApp } from '@/state/store'
 import { useRole } from '@/hooks/useRole'
 import { validateEmail } from '@/lib/validators'
 import { ROLE_LABELS, CARGO_LABELS, type Cargo } from '@/domain/types'
-import { Shield, UserCog, Users, ChevronDown, ChevronUp, Loader2, X, Plus } from 'lucide-react'
+import { Shield, UserCog, Users, ChevronDown, ChevronUp, Loader2, X, Plus, Warehouse } from 'lucide-react'
 import Button from '@/ui/Button'
 
 type RoleDB = 'OWNER' | 'ADMIN' | 'GERENTE' | 'COLABORADOR'
@@ -76,6 +76,43 @@ const PRESET_GERENTE_EXTRA: AreaCode[] = DEFAULT_AREAS.GERENTE
 const PRESET_COLAB_BASICO:  AreaCode[] = ['PDV', 'RELATORIOS_DIA']
 const PRESET_COLAB_VENDAS:  AreaCode[] = ['PDV', 'RELATORIOS_DIA', 'CLIENTES', 'ESTOQUE_VIEW']
 
+// Perfis rápidos — apenas usuários com acesso ao sistema (vendedores são cadastrados em /adm/vendedores)
+const PERFIL_PRESETS = [
+  {
+    key:   'gerente',
+    label: 'Gerente',
+    desc:  'Gestão completa da loja',
+    role:  'GERENTE'  as RoleDB,
+    cargo: null       as Cargo | null,
+    areas: ['FINANCEIRO'] as AreaCode[],
+    Icon:  UserCog,
+    ring:  'border-sky-400 bg-sky-50',
+    iconColor: 'text-sky-600',
+  },
+  {
+    key:   'producao',
+    label: 'Produção',
+    desc:  'Estoque, reposição e contagem',
+    role:  'COLABORADOR' as RoleDB,
+    cargo: 'ASSISTENTE'  as Cargo,
+    areas: ['ESTOQUE_VIEW', 'ESTOQUE_ADMIN', 'PRODUTOS'] as AreaCode[],
+    Icon:  Warehouse,
+    ring:  'border-amber-400 bg-amber-50',
+    iconColor: 'text-amber-600',
+  },
+  {
+    key:   'admin',
+    label: 'Administrador',
+    desc:  'Acesso total ao sistema',
+    role:  'ADMIN'  as RoleDB,
+    cargo: null     as Cargo | null,
+    areas: []       as AreaCode[],
+    Icon:  Shield,
+    ring:  'border-violet-400 bg-violet-50',
+    iconColor: 'text-violet-600',
+  },
+]
+
 // ── Visual por nível ──────────────────────────────────────────────────────────
 
 const ROLE_STYLE: Record<RoleDB, { badge: string; icon: typeof Shield; label: string }> = {
@@ -110,7 +147,17 @@ export default function AdminUsers() {
   const [nRole,    setNRole]    = useState<RoleDB>('COLABORADOR')
   const [nCargo,   setNCargo]   = useState<Cargo>('VENDEDOR')
   const [nAreas,   setNAreas]   = useState<AreaCode[]>([])
+  const [nPerfil,  setNPerfil]  = useState<string | null>(null)
   const [saving,   setSaving]   = useState(false)
+
+  function applyPerfilPreset(key: string) {
+    const p = PERFIL_PRESETS.find(x => x.key === key)
+    if (!p) return
+    setNPerfil(key)
+    setNRole(p.role)
+    setNCargo(p.cargo ?? 'VENDEDOR')
+    setNAreas(p.areas)
+  }
 
   const areasByUser = useMemo(() => {
     const map = new Map<string, Set<string>>()
@@ -297,7 +344,7 @@ export default function AdminUsers() {
         role: nRole, cargo: nRole === 'COLABORADOR' ? nCargo : null,
         nome: nName.trim() || null, email: nEmail.trim(),
       }])
-      setNEmail(''); setNName(''); setNRole('COLABORADOR'); setNCargo('VENDEDOR'); setNAreas([])
+      setNEmail(''); setNName(''); setNRole('COLABORADOR'); setNCargo('VENDEDOR'); setNAreas([]); setNPerfil(null)
       setShowNew(false)
       flash('Convite enviado.')
     } catch (e: any) {
@@ -330,7 +377,7 @@ export default function AdminUsers() {
         <div>
           <h1 className="text-lg font-semibold text-navy">Usuários & Acessos</h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            {company?.nome ?? 'Carregando empresa…'} · {list.length} usuário{list.length !== 1 ? 's' : ''}
+            {company?.nome ?? 'Carregando empresa…'} · {list.length} usuário{list.length !== 1 ? 's' : ''} com acesso ao sistema
           </p>
         </div>
         {callerIsAdmin && (
@@ -578,6 +625,38 @@ export default function AdminUsers() {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
+              {/* Aviso: vendedores são gerenciados separadamente */}
+              <div className="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2 text-xs text-amber-700">
+                Vendedores não precisam de conta. Cadastre-os em <strong>Vendedores</strong> na barra lateral.
+              </div>
+
+              {/* Perfil rápido */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perfil</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PERFIL_PRESETS.map(p => {
+                    const Icon     = p.Icon
+                    const selected = nPerfil === p.key
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => applyPerfilPreset(p.key)}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-colors cursor-pointer ${
+                          selected ? p.ring : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <Icon size={18} className={selected ? p.iconColor : 'text-slate-400'} />
+                        <span className={`text-xs font-semibold ${selected ? 'text-slate-800' : 'text-slate-500'}`}>
+                          {p.label}
+                        </span>
+                        <span className="text-[10px] text-slate-400 leading-tight">{p.desc}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">E-mail *</label>
                 <input
@@ -678,7 +757,7 @@ export default function AdminUsers() {
             </div>
 
             <div className="px-4 pb-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 flex-shrink-0">
-              <button onClick={() => setShowNew(false)} className="h-11 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer">Cancelar</button>
+              <button onClick={() => { setShowNew(false); setNPerfil(null) }} className="h-11 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer">Cancelar</button>
               <button
                 onClick={createUser}
                 disabled={saving || !nEmail.trim()}

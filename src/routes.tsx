@@ -39,6 +39,7 @@ import Bloqueado from '@/pages/Bloqueado'
 import Landing from '@/pages/Landing'
 import Performance from '@/pages/Performance'
 import Metas from '@/pages/Metas'
+import Vendedores from '@/pages/Vendedores'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -97,6 +98,7 @@ const router = createBrowserRouter([
       { path: '/adm/nps',          element: <NPSDashboard /> },
       { path: '/adm/conta',        element: <Conta /> },
       { path: '/adm/metas',        element: <Metas /> },
+      { path: '/adm/vendedores',   element: <Vendedores /> },
 
       // Rotas funcionais
       { path: '/products',     element: <Products /> },

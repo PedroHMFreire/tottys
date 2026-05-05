@@ -20,7 +20,7 @@ type MetaRow = {
 type CorrRow = {
   id: string; nome: string; tipo: string; tipo_meta: string
   valor_meta: number; bonus_valor: number; premio_descricao: string | null
-  inicio: string; fim: string; ativo: boolean; store_id: string | null
+  inicio: string; fim: string; ativo: boolean; store_ids: string[] | null
 }
 type RankRow = {
   user_id: string; nome: string; faturamento: number; cupons: number; posicao: number
@@ -71,7 +71,7 @@ export default function Metas() {
   const [corrForm, setCorrForm]           = useState({
     nome: '', tipo: 'INDIVIDUAL', tipo_meta: 'FINANCEIRA',
     valor_meta: '', bonus_valor: '0', premio_descricao: '',
-    inicio: '', fim: '', store_id: '',
+    inicio: '', fim: '', store_ids: [] as string[],
   })
   const [saving, setSaving]  = useState(false)
   const [folhaMes, setFolhaMes] = useState(() => {
@@ -163,7 +163,7 @@ export default function Metas() {
       premio_descricao: corrForm.premio_descricao || null,
       inicio:           corrForm.inicio,
       fim:              corrForm.fim,
-      store_id:         corrForm.store_id || null,
+      store_ids:        corrForm.store_ids.length > 0 ? corrForm.store_ids : null,
     }
     if (editingCorr) {
       await supabase.from('corridinhas').update(payload).eq('id', editingCorr.id)
@@ -173,7 +173,7 @@ export default function Metas() {
     setSaving(false)
     setShowCorrForm(false)
     setEditingCorrinha(null)
-    setCorrForm({ nome:'', tipo:'INDIVIDUAL', tipo_meta:'FINANCEIRA', valor_meta:'', bonus_valor:'0', premio_descricao:'', inicio:'', fim:'', store_id:'' })
+    setCorrForm({ nome:'', tipo:'INDIVIDUAL', tipo_meta:'FINANCEIRA', valor_meta:'', bonus_valor:'0', premio_descricao:'', inicio:'', fim:'', store_ids:[] })
     loadCorr()
   }
 
@@ -214,7 +214,7 @@ export default function Metas() {
       premio_descricao: c.premio_descricao ?? '',
       inicio:           c.inicio.slice(0, 16),
       fim:              c.fim.slice(0, 16),
-      store_id:         c.store_id ?? '',
+      store_ids:        c.store_ids ?? [],
     })
     setShowCorrForm(true)
   }
@@ -338,6 +338,18 @@ export default function Metas() {
                         {fmtDatetime(c.inicio)} → {fmtDatetime(c.fim)} · Meta: <strong>{c.tipo_meta === 'FINANCEIRA' ? formatBRL(c.valor_meta) : c.valor_meta}</strong>
                         {c.bonus_valor > 0 && <> · Bônus: <strong className="text-emerald-600">{formatBRL(c.bonus_valor)}</strong></>}
                       </p>
+                      {c.store_ids && c.store_ids.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {c.store_ids.map(sid => {
+                            const s = stores.find(x => x.id === sid)
+                            return s ? (
+                              <span key={sid} className="text-xs px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300">
+                                {s.nome}
+                              </span>
+                            ) : null
+                          })}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <button onClick={() => openEditCorr(c)} className="p-2 rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-colors">
@@ -522,12 +534,31 @@ export default function Metas() {
                 <input type="datetime-local" value={corrForm.fim} onChange={e => setCorrForm(f => ({ ...f, fim: e.target.value }))} className={inputCls} />
               </FormField>
             </div>
-            <FormField label="Loja (opcional)">
-              <select value={corrForm.store_id} onChange={e => setCorrForm(f => ({ ...f, store_id: e.target.value }))} className={selectCls}>
-                <option value="">Todas as lojas</option>
-                {stores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-              </select>
-            </FormField>
+            {stores.length > 0 && (
+              <FormField label="Lojas (vazio = todas)">
+                <div className="space-y-1.5">
+                  {stores.map(s => (
+                    <label key={s.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={corrForm.store_ids.includes(s.id)}
+                        onChange={e => setCorrForm(f => ({
+                          ...f,
+                          store_ids: e.target.checked
+                            ? [...f.store_ids, s.id]
+                            : f.store_ids.filter(id => id !== s.id),
+                        }))}
+                        className="w-4 h-4 accent-violet-600"
+                      />
+                      <span className="text-sm text-[var(--text-primary)]">{s.nome}</span>
+                    </label>
+                  ))}
+                  {corrForm.store_ids.length === 0 && (
+                    <p className="text-xs text-[var(--text-muted)]">Nenhuma selecionada = todas as lojas</p>
+                  )}
+                </div>
+              </FormField>
+            )}
           </div>
           <div className="flex gap-3 mt-5">
             <button onClick={() => setShowCorrForm(false)} className="flex-1 py-2.5 border border-[var(--border)] rounded-xl text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] transition-colors">

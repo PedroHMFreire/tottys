@@ -8,7 +8,7 @@ import { useSubscription } from '@/hooks/useSubscription'
 import {
   LayoutDashboard, Package, Warehouse, BarChart3, Users, CreditCard,
   Bell, Star, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
-  Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag, ExternalLink,
+  Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag,
   MessageSquare, type LucideIcon,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -29,6 +29,7 @@ const NAV: NavGroup[] = [
     items: [
       { to: '/adm/reports',     label: 'Relatórios', Icon: BarChart3, area: 'RELATORIOS'  },
       { to: '/adm/metas',       label: 'Metas',      Icon: Star,      area: 'RELATORIOS'  },
+      { to: '/adm/vendedores',  label: 'Vendedores', Icon: Users,     area: 'RELATORIOS'  },
       { to: '/adm/collections', label: 'Coleções',   Icon: Layers,   area: 'PRODUTOS'    },
       { to: '/adm/promocoes',   label: 'Promoções',  Icon: Tag,      area: 'PRODUTOS'    },
     ],
@@ -72,20 +73,29 @@ const NAV: NavGroup[] = [
 
 function SidebarContent({ onClose, userName }: { onClose: () => void; userName: string }) {
   const { company, store, setStore } = useApp()
-  const { role, isAdmin } = useRole()
+  const { role } = useRole()
   const { has } = useAreas()
   const navigate = useNavigate()
   const [storeList, setStoreList] = useState<Array<{ id: string; nome: string; company_id: string; uf: string }>>([])
 
   useEffect(() => {
     if (!company?.id) { setStoreList([]); return }
-    supabase.from('stores').select('id, nome, company_id, uf').eq('company_id', company.id).order('nome').then(({ data }) => {
-      if (!data) return
-      setStoreList(data as any)
-      const alreadySelected = store?.id && data.some(s => s.id === store.id)
-      if (!alreadySelected && data.length > 0) {
-        setStore(data[0] as any)
-        localStorage.setItem('app_selected_store', JSON.stringify(data[0]))
+    Promise.all([
+      supabase.from('stores').select('id, nome, company_id, uf').eq('company_id', company.id).order('nome'),
+      supabase.auth.getUser().then(({ data: { user } }) =>
+        user ? supabase.from('user_stores').select('store_id').eq('user_id', user.id) : { data: [] }
+      ),
+    ]).then(([storesRes, userStoresRes]) => {
+      if (!storesRes.data) return
+      const allowed = (userStoresRes.data ?? []) as Array<{ store_id: string }>
+      const filtered = allowed.length > 0
+        ? storesRes.data.filter(s => allowed.some(a => a.store_id === s.id))
+        : storesRes.data
+      setStoreList(filtered as any)
+      const alreadySelected = store?.id && filtered.some(s => s.id === store.id)
+      if (!alreadySelected && filtered.length > 0) {
+        setStore(filtered[0] as any)
+        localStorage.setItem('app_selected_store', JSON.stringify(filtered[0]))
       }
     })
   }, [company?.id])
@@ -95,9 +105,8 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
     navigate('/login')
   }
 
-  function openPDV() {
-    if (!store?.id) return
-    window.open('/loja/sell', '_blank', 'noopener,noreferrer')
+  function openVendas() {
+    navigate('/loja')
   }
 
   // Filtra itens de menu por área do usuário
@@ -141,14 +150,11 @@ function SidebarContent({ onClose, userName }: { onClose: () => void; userName: 
           </select>
         )}
         <button
-          onClick={openPDV}
-          disabled={!store?.id}
-          title={!store?.id ? 'Selecione uma loja para abrir o PDV' : `Abrir PDV — ${store?.nome}`}
-          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-primary hover:bg-azure-dark disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors cursor-pointer"
+          onClick={openVendas}
+          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-primary hover:bg-azure-dark text-white text-sm font-semibold transition-colors cursor-pointer"
         >
           <ShoppingBag size={15} strokeWidth={2.2} />
-          <span className="flex-1 text-left">Abrir PDV</span>
-          <ExternalLink size={12} strokeWidth={2} className="opacity-70" />
+          <span className="flex-1 text-left">Vendas</span>
         </button>
       </div>
 

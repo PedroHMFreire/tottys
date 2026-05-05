@@ -1,16 +1,14 @@
 // src/components/settings/FiscalSettingsModal.tsx
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
-import { FocusNFeAdapter } from '@/domain/services/adapters/FocusNFeAdapter'
-import { X, FileText, Loader2, Check, AlertCircle, CheckCircle } from 'lucide-react'
+import { X, FileText, Loader2, Check, Info } from 'lucide-react'
 
-type Provider = 'nenhum' | 'focus_nfe' | 'enotas' | 'sat'
+type Provider = 'nenhum' | 'focus_nfe'
 type Ambiente = 'homologacao' | 'producao'
 
 interface FiscalConfig {
   fiscal_provider: Provider
-  fiscal_api_key: string
   cnpj_emitente: string
   csc_id: string
   csc_token: string
@@ -21,14 +19,7 @@ interface FiscalConfig {
 
 const PROVIDER_LABELS: Record<Provider, string> = {
   nenhum:    'Nenhum (desativado)',
-  focus_nfe: 'Focus NFe',
-  enotas:    'eNotas',
-  sat:       'SAT (São Paulo)',
-}
-
-const PROVIDER_LINKS: Partial<Record<Provider, string>> = {
-  focus_nfe: 'https://focusnfe.com.br',
-  enotas:    'https://enotas.com.br',
+  focus_nfe: 'Focus NFe (ativo)',
 }
 
 export default function FiscalSettingsModal({ onClose }: { onClose: () => void }) {
@@ -36,12 +27,8 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle')
-  const [testMsg, setTestMsg] = useState('')
-
   const [form, setForm] = useState<FiscalConfig>({
     fiscal_provider: 'nenhum',
-    fiscal_api_key: '',
     cnpj_emitente: '',
     csc_id: '',
     csc_token: '',
@@ -55,14 +42,13 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
     setLoading(true)
     supabase
       .from('stores')
-      .select('fiscal_provider,fiscal_api_key,cnpj_emitente,csc_id,csc_token,serie,proxima_nfce,ambiente_fiscal')
+      .select('fiscal_provider,cnpj_emitente,csc_id,csc_token,serie,proxima_nfce,ambiente_fiscal')
       .eq('id', store.id)
       .single()
       .then(({ data }) => {
         if (data) {
           setForm({
             fiscal_provider: (data.fiscal_provider as Provider) || 'nenhum',
-            fiscal_api_key:  data.fiscal_api_key  || '',
             cnpj_emitente:   data.cnpj_emitente   || '',
             csc_id:          data.csc_id           || '',
             csc_token:       data.csc_token        || '',
@@ -78,7 +64,6 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
   function set<K extends keyof FiscalConfig>(k: K, v: FiscalConfig[K]) {
     setForm(f => ({ ...f, [k]: v }))
     setSaved(false)
-    setTestStatus('idle')
   }
 
   async function handleSave() {
@@ -88,32 +73,6 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
-  }
-
-  async function handleTest() {
-    setTestStatus('testing')
-    setTestMsg('')
-    try {
-      const result = await FocusNFeAdapter.consultarStatus('test', {
-        provider: form.fiscal_provider,
-        api_key: form.fiscal_api_key,
-        ambiente: form.ambiente_fiscal,
-        cnpj_emitente: form.cnpj_emitente,
-        csc_id: form.csc_id,
-        csc_token: form.csc_token,
-        serie: form.serie,
-      })
-      if (result.status === 'SEFAZ_ONLINE') {
-        setTestStatus('ok')
-        setTestMsg('SEFAZ online. Credenciais válidas.')
-      } else {
-        setTestStatus('error')
-        setTestMsg(result.motivo || 'SEFAZ indisponível.')
-      }
-    } catch (e: any) {
-      setTestStatus('error')
-      setTestMsg(e?.message || 'Erro de conexão.')
-    }
   }
 
   return (
@@ -141,9 +100,17 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
             </div>
           ) : (
             <>
+              {/* Nota software house */}
+              <div className="flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 p-3">
+                <Info size={14} className="text-azure shrink-0 mt-0.5" />
+                <p className="text-xs text-slate-600">
+                  A conexão com o SEFAZ é gerenciada pelo sistema Tottys. Configure abaixo apenas os dados fiscais da sua empresa.
+                </p>
+              </div>
+
               {/* Provedor */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Provedor</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Emissão de NFC-e</label>
                 <select
                   value={form.fiscal_provider}
                   onChange={e => set('fiscal_provider', e.target.value as Provider)}
@@ -153,12 +120,6 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                     <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
                   ))}
                 </select>
-                {PROVIDER_LINKS[form.fiscal_provider] && (
-                  <div className="text-xs text-azure">
-                    Documentação e cadastro:{' '}
-                    <span className="underline">{PROVIDER_LINKS[form.fiscal_provider]}</span>
-                  </div>
-                )}
               </div>
 
               {form.fiscal_provider !== 'nenhum' && (
@@ -179,21 +140,9 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                     </div>
                     {form.ambiente_fiscal === 'producao' && (
                       <div className="text-xs text-amber-600 bg-amber-50 rounded-xl p-2">
-                        Ambiente de produção emite documentos fiscais reais com validade legal.
+                        Produção emite documentos fiscais reais com validade legal.
                       </div>
                     )}
-                  </div>
-
-                  {/* API Key */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Chave de API</label>
-                    <input
-                      type="password"
-                      value={form.fiscal_api_key}
-                      onChange={e => set('fiscal_api_key', e.target.value)}
-                      placeholder="Cole a chave gerada no painel do provedor"
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
-                    />
                   </div>
 
                   {/* CNPJ emitente */}
@@ -210,35 +159,33 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                     <div className="text-xs text-slate-400">Apenas dígitos. CNPJ registrado na SEFAZ.</div>
                   </div>
 
-                  {/* CSC — apenas para NFC-e */}
-                  {(form.fiscal_provider === 'focus_nfe' || form.fiscal_provider === 'enotas') && (
-                    <div className="space-y-3">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">CSC (Código de Segurança do Contribuinte)</div>
-                      <div className="text-xs text-slate-400 -mt-2">Gerado no portal da SEFAZ do seu estado. Necessário para o QR Code da NFC-e.</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1.5">
-                          <label className="text-xs text-slate-500">ID do CSC</label>
-                          <input
-                            type="text"
-                            value={form.csc_id}
-                            onChange={e => set('csc_id', e.target.value)}
-                            placeholder="000001"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs text-slate-500">Token CSC</label>
-                          <input
-                            type="password"
-                            value={form.csc_token}
-                            onChange={e => set('csc_token', e.target.value)}
-                            placeholder="Token do CSC"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
-                          />
-                        </div>
+                  {/* CSC */}
+                  <div className="space-y-3">
+                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">CSC (Código de Segurança do Contribuinte)</div>
+                    <div className="text-xs text-slate-400 -mt-2">Gerado no portal da SEFAZ do seu estado. Necessário para o QR Code da NFC-e.</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-slate-500">ID do CSC</label>
+                        <input
+                          type="text"
+                          value={form.csc_id}
+                          onChange={e => set('csc_id', e.target.value)}
+                          placeholder="000001"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-slate-500">Token CSC</label>
+                        <input
+                          type="password"
+                          value={form.csc_token}
+                          onChange={e => set('csc_token', e.target.value)}
+                          placeholder="Token do CSC"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure"
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Série + Próximo número */}
                   <div className="grid grid-cols-2 gap-3">
@@ -263,29 +210,6 @@ export default function FiscalSettingsModal({ onClose }: { onClose: () => void }
                         className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-azure font-mono text-center"
                       />
                     </div>
-                  </div>
-
-                  {/* Teste de conexão */}
-                  <div className="rounded-2xl border border-slate-100 p-3 space-y-2">
-                    <div className="text-xs font-semibold text-slate-500">Testar conexão com SEFAZ</div>
-                    <button
-                      onClick={handleTest}
-                      disabled={testStatus === 'testing' || !form.fiscal_api_key}
-                      className="w-full h-9 flex items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40 cursor-pointer transition-colors"
-                    >
-                      {testStatus === 'testing' ? <Loader2 size={14} className="animate-spin" /> : null}
-                      {testStatus === 'testing' ? 'Testando…' : 'Verificar conexão'}
-                    </button>
-                    {testStatus === 'ok' && (
-                      <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 rounded-xl p-2">
-                        <CheckCircle size={13} /> {testMsg}
-                      </div>
-                    )}
-                    {testStatus === 'error' && (
-                      <div className="flex items-center gap-2 text-xs text-rose-700 bg-rose-50 rounded-xl p-2">
-                        <AlertCircle size={13} /> {testMsg}
-                      </div>
-                    )}
                   </div>
                 </>
               )}

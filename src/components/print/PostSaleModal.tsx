@@ -5,7 +5,6 @@ import { useApp } from '@/state/store'
 import { usePrinterConfig } from '@/hooks/usePrinterConfig'
 import { useThermalPrint } from '@/hooks/useThermalPrint'
 import ThermalReceipt, { type FiscalInfo, type ReceiptItem, type ReceiptPayment } from './ThermalReceipt'
-import { FocusNFeAdapter } from '@/domain/services/adapters/FocusNFeAdapter'
 import { formatBRL } from '@/lib/currency'
 import { Printer, FileText, X, Loader2, CheckCircle, AlertCircle, Mail, Send, MessageCircle } from 'lucide-react'
 
@@ -103,27 +102,26 @@ export default function PostSaleModal({ data, onClose }: Props) {
     setEmitting(true)
     setFiscalError(null)
     try {
-      const result = await FocusNFeAdapter.emitirNFCe(
-        { id: data.saleId, total: data.total } as any,
-        store as any,
-        company as any,
-        {
-          provider: (store as any)?.fiscal_provider || 'nenhum',
-          api_key: (store as any)?.fiscal_api_key || '',
-          ambiente: store?.ambiente_fiscal || 'homologacao',
-          cnpj_emitente: (store as any)?.cnpj_emitente || company?.cnpj || '',
-          csc_id: (store as any)?.csc_id || '',
-          csc_token: (store as any)?.csc_token || '',
-          serie: store?.serie || '001',
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('emit-nfce', {
+        body: {
+          store_id: store?.id,
+          sale_id:  data.saleId,
+          total:    data.total,
+          items:    data.items.map((it, i) => ({
+            numero_item: i + 1,
+            nome:        it.nome,
+            qtde:        it.qtde,
+            preco_unit:  it.preco_unit,
+          })),
+          payments: data.payments.map(p => ({ meio: p.meio, valor: p.valor })),
         },
-        data.items.map((it, i) => ({
-          numero_item: i + 1,
-          nome: it.nome,
-          qtde: it.qtde,
-          preco_unit: it.preco_unit,
-        })),
-        data.payments.map(p => ({ meio: p.meio, valor: p.valor }))
-      )
+      })
+
+      if (fnError) throw new Error(fnError.message)
+      const result = fnData as {
+        status: string; chave?: string; protocolo?: string; numero?: number; serie?: string
+        xml_url?: string; danfe_url?: string; qr_code_url?: string; motivo_rejeicao?: string
+      }
 
       if (result.status === 'AUTORIZADA') {
         const fiscalInfo: FiscalInfo = {
@@ -183,10 +181,9 @@ export default function PostSaleModal({ data, onClose }: Props) {
 
       // Generate NPS ref — reuse sale_id as stable ref
       const npsRef = data.saleId
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
       const npsUrl = `${window.location.origin}/nps?ref=${npsRef}`
 
-      const { error, data: fnData } = await supabase.functions.invoke('smooth-processor', {
+      const { error } = await supabase.functions.invoke('smooth-processor', {
         body: {
           type: 'receipt',
           to: email,
@@ -223,6 +220,8 @@ export default function PostSaleModal({ data, onClose }: Props) {
         company_id: company?.id,
         sale_id: data.saleId,
         customer_id: data.customerId ?? null,
+        survey_template: (company as any)?.survey_template ?? 'NPS',
+        company_nome: company?.nome ?? null,
       }, { onConflict: 'id' })
 
       setEmailSent(true)

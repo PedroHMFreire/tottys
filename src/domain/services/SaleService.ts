@@ -17,13 +17,14 @@ export type SaleItemInput = {
 export async function createSaleWithItems(opts: {
   storeId?: string
   userId?: string
+  vendedorId?: string | null
   customerId?: string | null
   items: SaleItemInput[]
   total: number
   desconto?: number
   status?: 'PAGA' | 'PENDENTE' | 'CANCELADA'
 }) {
-  const { storeId, userId, customerId, items, total } = opts
+  const { storeId, userId, vendedorId, customerId, items, total } = opts
   const desconto = opts.desconto ?? 0
   const status = opts.status ?? 'PAGA'
 
@@ -42,6 +43,7 @@ export async function createSaleWithItems(opts: {
       .insert({
         store_id: storeId,
         user_id: userId ?? null,
+        vendedor_id: vendedorId ?? null,
         customer_id: customerId ?? null,
         total,
         desconto,

@@ -15,6 +15,7 @@ type Conta = {
   pago_em: string | null
   valor_pago: number | null
   observacoes: string | null
+  store_id: string | null
 }
 
 type ContaForm = {
@@ -24,6 +25,7 @@ type ContaForm = {
   categoria: string
   recorrente: boolean
   observacoes: string
+  store_id: string
 }
 
 const CATEGORIAS = ['FORNECEDOR', 'ALUGUEL', 'FUNCIONARIOS', 'ENERGIA', 'OUTROS'] as const
@@ -42,7 +44,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const EMPTY_FORM: ContaForm = {
   nome: '', valor: '', vencimento: new Date().toISOString().slice(0, 10),
-  categoria: 'OUTROS', recorrente: false, observacoes: '',
+  categoria: 'OUTROS', recorrente: false, observacoes: '', store_id: '',
 }
 
 function isAtrasada(c: Conta) {
@@ -50,8 +52,9 @@ function isAtrasada(c: Conta) {
 }
 
 export default function ContasPagar() {
-  const { company } = useApp()
+  const { company, store } = useApp()
   const [contas, setContas] = useState<Conta[]>([])
+  const [stores, setStores] = useState<Array<{ id: string; nome: string }>>([])
   const [loading, setLoading] = useState(false)
   const [filtro, setFiltro] = useState<'PENDENTE' | 'PAGO' | 'TODAS'>('PENDENTE')
   const [showForm, setShowForm] = useState(false)
@@ -62,8 +65,14 @@ export default function ContasPagar() {
   const [valorPago, setValorPago] = useState('')
 
   useEffect(() => {
+    if (!company?.id) return
+    supabase.from('stores').select('id, nome').eq('company_id', company.id).order('nome')
+      .then(({ data }) => setStores(data || []))
+  }, [company?.id])
+
+  useEffect(() => {
     if (company?.id) load()
-  }, [company?.id, filtro])
+  }, [company?.id, store?.id, filtro])
 
   async function load() {
     if (!company?.id) return
@@ -76,6 +85,7 @@ export default function ContasPagar() {
         .order('vencimento')
         .limit(200)
       if (filtro !== 'TODAS') q = q.eq('status', filtro)
+      if (store?.id) q = q.or(`store_id.eq.${store.id},store_id.is.null`)
       const { data } = await q
       setContas((data || []) as Conta[])
     } finally {
@@ -85,7 +95,7 @@ export default function ContasPagar() {
 
   function openNew() {
     setEditConta(null)
-    setForm(EMPTY_FORM)
+    setForm({ ...EMPTY_FORM, store_id: store?.id || '' })
     setShowForm(true)
   }
 
@@ -98,6 +108,7 @@ export default function ContasPagar() {
       categoria: c.categoria,
       recorrente: c.recorrente,
       observacoes: c.observacoes || '',
+      store_id: c.store_id || '',
     })
     setShowForm(true)
   }
@@ -114,6 +125,7 @@ export default function ContasPagar() {
         categoria: form.categoria,
         recorrente: form.recorrente,
         observacoes: form.observacoes.trim() || null,
+        store_id: form.store_id || null,
       }
       if (editConta) {
         await supabase.from('contas_pagar').update(payload).eq('id', editConta.id)
@@ -215,6 +227,11 @@ export default function ContasPagar() {
                   <span className="font-medium truncate">{c.nome}</span>
                   {c.recorrente && (
                     <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600">recorrente</span>
+                  )}
+                  {c.store_id && stores.find(s => s.id === c.store_id) && (
+                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                      {stores.find(s => s.id === c.store_id)?.nome}
+                    </span>
                   )}
                 </div>
                 <div className="text-xs text-zinc-500 mt-0.5">
@@ -355,6 +372,20 @@ export default function ContasPagar() {
                 ))}
               </div>
             </div>
+
+            {stores.length > 1 && (
+              <div>
+                <div className="text-xs text-zinc-500 mb-1">Loja</div>
+                <select
+                  value={form.store_id}
+                  onChange={e => setForm(p => ({ ...p, store_id: e.target.value }))}
+                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-azure bg-white w-full"
+                >
+                  <option value="">Empresa (todas as lojas)</option>
+                  {stores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                </select>
+              </div>
+            )}
 
             <label className="flex items-center gap-3 cursor-pointer">
               <input

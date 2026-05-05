@@ -30,6 +30,7 @@ export interface Company {
   nome: string
   cnpj?: string
   regime_tributario?: string
+  survey_template?: string
 }
 
 export interface Store {

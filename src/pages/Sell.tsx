@@ -65,6 +65,21 @@ function highlightTerm(text: string, term: string) {
   )
 }
 
+function medal(pos: number) {
+  if (pos === 1) return '🥇'
+  if (pos === 2) return '🥈'
+  if (pos === 3) return '🥉'
+  return `${pos}º`
+}
+function sellCountdown(fim: string) {
+  const diff = new Date(fim).getTime() - Date.now()
+  if (diff <= 0) return null
+  const h = Math.floor(diff / 3_600_000)
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`
+  const m = Math.floor((diff % 3_600_000) / 60_000)
+  return `${h}h ${m}m`
+}
+
 async function getStoreStock(productId: string, storeId?: string | null): Promise<number> {
   try {
     if (storeId) {
@@ -172,6 +187,23 @@ export default function Sell() {
     return () => { mounted = false }
   }, [store?.id, demoKey])
 
+  /* -------- Vendedor -------- */
+  type VendedorOpt = { id: string; nome: string; apelido: string | null; user_id: string | null }
+  const [vendedores, setVendedores]           = useState<VendedorOpt[]>([])
+  const [selectedVendedor, setSelectedVendedor] = useState<VendedorOpt | null>(null)
+
+  useEffect(() => {
+    if (!company?.id) { setVendedores([]); return }
+    let q = supabase
+      .from('vendedores')
+      .select('id, nome, apelido, user_id')
+      .eq('company_id', company.id)
+      .eq('ativo', true)
+      .order('nome')
+    if (store?.id) q = q.or(`store_id.eq.${store.id},store_id.is.null`)
+    q.then(({ data }) => setVendedores((data ?? []) as VendedorOpt[]))
+  }, [company?.id, store?.id])
+
   /* -------- Cliente / Cashback -------- */
   const [selectedCustomer, setSelectedCustomer] = useState<SelectedCustomer | null>(null)
   const [showResgate, setShowResgate] = useState(false)
@@ -203,7 +235,7 @@ export default function Sell() {
   }
 
   useEffect(() => { if (cart.length === 0) setConfirmClear(false) }, [cart.length])
-  useEffect(() => { setCart([]); stockCache.current.clear() }, [store?.id])
+  useEffect(() => { setCart([]); stockCache.current.clear(); setSelectedVendedor(null) }, [store?.id])
 
   /* -------- Histórico & KPIs -------- */
   const [salesHistory, setSalesHistory] = useState<any[]>([])
@@ -212,6 +244,12 @@ export default function Sell() {
   const [vendasHoje, setVendasHoje] = useState(0)
   const [ticketMedio, setTicketMedio] = useState(0)
   const [itensVendidos, setItensVendidos] = useState(0)
+
+  // ── Painel motivacional PDV ──
+  const [myRankSell, setMyRankSell] = useState<{ posicao: number; faturamento: number } | null>(null)
+  const [metaSell, setMetaSell]     = useState<{ pct: number; tipo: string; bonus_valor: number } | null>(null)
+  const [corrSell, setCorrSell]     = useState<{ nome: string; pct: number; fim: string } | null>(null)
+  const [, setSellTick] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -241,6 +279,42 @@ export default function Sell() {
     }
     load()
   }, [store?.id])
+
+  // Tick para atualizar countdown da corridinha
+  useEffect(() => {
+    if (isAdmin) return
+    const id = setInterval(() => setSellTick(t => t + 1), 60_000)
+    return () => clearInterval(id)
+  }, [isAdmin])
+
+  // Carrega dados do painel motivacional
+  useEffect(() => {
+    if (isAdmin || !store?.id || !user?.id || !isUUID(store.id)) return
+    const hoje = new Date().toISOString().slice(0, 10)
+    Promise.all([
+      supabase.rpc('get_ranking_vendedores', { p_store_id: store.id }),
+      supabase.rpc('get_metas_progresso', { p_user_id: user.id, p_store_id: store.id, p_data: hoje }),
+      supabase.rpc('get_corridinhas_progresso', { p_user_id: user.id, p_store_id: store.id }),
+    ]).then(([rankRes, metaRes, corrRes]) => {
+      type RankRow = { user_id: string; posicao: number; faturamento: number }
+      type MetaRow = { pct: number; tipo: string; bonus_valor: number }
+      type CorrRow = { nome: string; pct: number; fim: string; concluido: boolean }
+
+      const rank = (rankRes.data ?? []) as RankRow[]
+      const mine = rank.find(r => r.user_id === user.id)
+      setMyRankSell(mine ? { posicao: mine.posicao, faturamento: mine.faturamento } : null)
+
+      const mList = (metaRes.data ?? []) as MetaRow[]
+      setMetaSell([...mList].sort((a, b) => a.pct - b.pct)[0] ?? null)
+
+      const cList = (corrRes.data ?? []) as CorrRow[]
+      setCorrSell(
+        cList
+          .filter(c => !c.concluido)
+          .sort((a, b) => new Date(a.fim).getTime() - new Date(b.fim).getTime())[0] ?? null
+      )
+    })
+  }, [store?.id, user?.id, isAdmin])
 
   async function openSaleReceipt(sale: any) {
     setLoadingReceiptId(sale.id)
@@ -444,9 +518,14 @@ export default function Sell() {
         if (item.qtde > 99) { pushToast('error', `Máximo 99 por item: ${item.nome}.`); return }
       }
 
+      // Se vendedor selecionado tem login próprio, atribui a venda a ele; caso contrário userId fica null
+      const effectiveUserId = selectedVendedor
+        ? (selectedVendedor.user_id ?? undefined)
+        : currentUserId
       const { saleId, persisted } = await createSaleWithItems({
         storeId: store.id,
-        userId: currentUserId,
+        userId: effectiveUserId,
+        vendedorId: selectedVendedor?.id ?? null,
         customerId: selectedCustomer?.id ?? null,
         total: totalFinal,
         desconto: descontoValor + resgateAplicado,
@@ -616,6 +695,59 @@ export default function Sell() {
           </div>
           </div>
         </div>
+
+        {/* ── Barra motivacional — apenas para vendedores ── */}
+        {!isAdmin && (myRankSell || metaSell || corrSell) && (
+          <div className="bg-slate-950 border-t border-slate-800 px-4 py-2">
+            <div className="max-w-5xl mx-auto flex items-center gap-4 overflow-x-auto">
+
+              {/* Ranking */}
+              {myRankSell && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-sm leading-none">{medal(myRankSell.posicao)}</span>
+                  <span className="text-xs font-semibold text-white">lugar</span>
+                </div>
+              )}
+
+              {myRankSell && (metaSell || corrSell) && (
+                <div className="w-px h-3 bg-slate-700 shrink-0" />
+              )}
+
+              {/* Meta */}
+              {metaSell && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Meta</span>
+                  <div className="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${metaSell.pct >= 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-blue-500 to-cyan-400'}`}
+                      style={{ width: `${Math.min(100, metaSell.pct)}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-bold ${metaSell.pct >= 100 ? 'text-emerald-400' : 'text-slate-300'}`}>
+                    {metaSell.pct}%
+                  </span>
+                  {metaSell.bonus_valor > 0 && metaSell.pct < 100 && (
+                    <span className="text-[10px] text-amber-400 font-semibold">+{formatBRL(metaSell.bonus_valor)}</span>
+                  )}
+                </div>
+              )}
+
+              {metaSell && corrSell && <div className="w-px h-3 bg-slate-700 shrink-0" />}
+
+              {/* Corridinha */}
+              {corrSell && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs text-violet-400">⚡</span>
+                  <span className="text-xs text-slate-300 truncate max-w-[90px]">{corrSell.nome}</span>
+                  <span className="text-xs font-bold text-violet-300">
+                    {sellCountdown(corrSell.fim) ?? '⏰ encerra!'}
+                  </span>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="max-w-5xl mx-auto px-4 pt-4 flex flex-col gap-3 md:grid md:grid-cols-[1fr_340px] lg:grid-cols-[1fr_380px] md:gap-5 md:items-start">
@@ -753,6 +885,31 @@ export default function Sell() {
                 value={selectedCustomer}
                 onChange={c => { setSelectedCustomer(c); setResgateAplicado(0) }}
               />
+            </div>
+          )}
+
+          {/* Vendedor */}
+          {vendedores.length > 0 && (
+            <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Vendedor</div>
+              <select
+                value={selectedVendedor?.id ?? ''}
+                onChange={e => setSelectedVendedor(vendedores.find(v => v.id === e.target.value) ?? null)}
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:border-azure cursor-pointer transition-colors"
+              >
+                <option value="">Sem vendedor específico</option>
+                {vendedores.map(v => (
+                  <option key={v.id} value={v.id}>{v.apelido || v.nome}</option>
+                ))}
+              </select>
+              {selectedVendedor && (
+                <button
+                  onClick={() => setSelectedVendedor(null)}
+                  className="mt-1.5 text-xs text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  Limpar seleção
+                </button>
+              )}
             </div>
           )}
         </div>
