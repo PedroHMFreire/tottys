@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Package, Warehouse, BarChart3, Users, CreditCard,
   Bell, Star, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
   Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag,
-  MessageSquare, type LucideIcon,
+  MessageSquare, UserCheck, Gift, Target, type LucideIcon,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -27,37 +27,37 @@ const NAV: NavGroup[] = [
   {
     group: 'Vendas',
     items: [
-      { to: '/adm/reports',     label: 'Relatórios', Icon: BarChart3, area: 'RELATORIOS'  },
-      { to: '/adm/metas',       label: 'Metas',      Icon: Star,      area: 'RELATORIOS'  },
-      { to: '/adm/vendedores',  label: 'Vendedores', Icon: Users,     area: 'RELATORIOS'  },
-      { to: '/adm/collections', label: 'Coleções',   Icon: Layers,   area: 'PRODUTOS'    },
-      { to: '/adm/promocoes',   label: 'Promoções',  Icon: Tag,      area: 'PRODUTOS'    },
+      { to: '/adm/reports',    label: 'Relatórios', Icon: BarChart3,   area: 'RELATORIOS' },
+      { to: '/adm/metas',      label: 'Metas',      Icon: Target,      area: 'RELATORIOS' },
+      { to: '/adm/vendedores', label: 'Vendedores', Icon: UserCheck,   area: 'RELATORIOS' },
+      { to: '/insights',       label: 'Insights',   Icon: TrendingUp,  area: 'INSIGHTS'   },
     ],
   },
   {
     group: 'Catálogo',
     items: [
-      { to: '/adm/products',   label: 'Produtos',  Icon: Package,   area: 'PRODUTOS'      },
-      { to: '/adm/stock',      label: 'Estoque',   Icon: Warehouse, area: 'ESTOQUE_ADMIN' },
-      { to: '/adm/etiquetas',  label: 'Etiquetas', Icon: Printer,   area: 'PRODUTOS'      },
+      { to: '/adm/products',   label: 'Produtos',   Icon: Package,   area: 'PRODUTOS'      },
+      { to: '/adm/stock',      label: 'Estoque',    Icon: Warehouse, area: 'ESTOQUE_ADMIN' },
+      { to: '/adm/etiquetas',  label: 'Etiquetas',  Icon: Printer,   area: 'PRODUTOS'      },
+      { to: '/adm/collections',label: 'Coleções',   Icon: Layers,    area: 'PRODUTOS'      },
+      { to: '/adm/promocoes',  label: 'Promoções',  Icon: Tag,       area: 'PRODUTOS'      },
     ],
   },
   {
     group: 'Clientes',
     items: [
-      { to: '/customers',    label: 'Clientes',  Icon: Users,          area: 'CLIENTES'  },
-      { to: '/crediario',    label: 'Crediário', Icon: CreditCard,     area: 'CREDIARIO' },
-      { to: '/cobranca',     label: 'Cobranças', Icon: Bell,           area: 'CREDIARIO' },
-      { to: '/adm/cashback', label: 'Cashback',  Icon: Star,           area: 'CASHBACK'  },
-      { to: '/adm/nps',      label: 'NPS',       Icon: MessageSquare,  area: 'INSIGHTS'  },
+      { to: '/customers',    label: 'Clientes', Icon: Users,         area: 'CLIENTES' },
+      { to: '/adm/cashback', label: 'Cashback', Icon: Gift,          area: 'CASHBACK' },
+      { to: '/adm/nps',      label: 'Pesquisas', Icon: MessageSquare, area: 'INSIGHTS' },
     ],
   },
   {
     group: 'Financeiro',
     items: [
-      { to: '/financeiro',   label: 'Financeiro',     Icon: Wallet,     area: 'FINANCEIRO' },
-      { to: '/contas-pagar', label: 'Contas a Pagar', Icon: FileText,   area: 'FINANCEIRO' },
-      { to: '/insights',     label: 'Insights',       Icon: TrendingUp, area: 'INSIGHTS'   },
+      { to: '/financeiro',   label: 'Fluxo de Caixa',  Icon: Wallet,      area: 'FINANCEIRO' },
+      { to: '/contas-pagar', label: 'Contas a Pagar',  Icon: FileText,    area: 'FINANCEIRO' },
+      { to: '/crediario',    label: 'Crediário',        Icon: CreditCard,  area: 'CREDIARIO'  },
+      { to: '/cobranca',     label: 'Cobranças',        Icon: Bell,        area: 'CREDIARIO'  },
     ],
   },
   {
@@ -66,7 +66,7 @@ const NAV: NavGroup[] = [
       { to: '/adm/users',    label: 'Usuários',    Icon: UserCog,    area: 'USERS'  },
       { to: '/adm/stores',   label: 'Lojas',       Icon: Store,      area: 'CONFIG' },
       { to: '/adm/settings', label: 'Config',      Icon: Settings,   area: 'CONFIG' },
-      { to: '/adm/conta',    label: 'Minha Conta', Icon: CreditCard              },
+      { to: '/adm/conta',    label: 'Minha Conta', Icon: CreditCard               },
     ],
   },
 ]
