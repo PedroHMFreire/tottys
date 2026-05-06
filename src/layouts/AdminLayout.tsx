@@ -9,7 +9,8 @@ import {
   LayoutDashboard, Package, Warehouse, BarChart3, Users, CreditCard,
   Bell, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
   Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag,
-  MessageSquare, UserCheck, Gift, Target, ContactRound, type LucideIcon,
+  MessageSquare, UserCheck, Gift, Target, ContactRound, BrainCircuit,
+  type LucideIcon,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -59,6 +60,12 @@ const NAV: NavGroup[] = [
       { to: '/contas-pagar', label: 'Contas a Pagar',  Icon: FileText,    area: 'FINANCEIRO' },
       { to: '/crediario',    label: 'Crediário',        Icon: CreditCard,  area: 'CREDIARIO'  },
       { to: '/cobranca',     label: 'Cobranças',        Icon: Bell,        area: 'CREDIARIO'  },
+    ],
+  },
+  {
+    group: 'Inteligência',
+    items: [
+      { to: '/adm/paulo', label: 'Paulo IA', Icon: BrainCircuit, area: 'RELATORIOS' },
     ],
   },
   {

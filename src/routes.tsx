@@ -42,6 +42,7 @@ import Metas from '@/pages/Metas'
 import Vendedores from '@/pages/Vendedores'
 import CRM from '@/pages/CRM'
 import CustomerProfile from '@/pages/CustomerProfile'
+import Paulo from '@/pages/Paulo'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -102,6 +103,7 @@ const router = createBrowserRouter([
       { path: '/adm/metas',        element: <Metas /> },
       { path: '/adm/vendedores',   element: <Vendedores /> },
       { path: '/adm/crm',          element: <CRM /> },
+      { path: '/adm/paulo',        element: <Paulo /> },
 
       // Rotas funcionais
       { path: '/products',     element: <Products /> },
