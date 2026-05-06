@@ -9,10 +9,11 @@ type Store    = { id: string; nome: string }
 type Vendedor = {
   id: string; nome: string; apelido: string | null
   store_id: string | null; ativo: boolean; user_id: string | null
+  percentual_comissao: number
   stores?: { nome: string } | null
 }
 
-const EMPTY_FORM = { nome: '', apelido: '', store_id: '', ativo: true }
+const EMPTY_FORM = { nome: '', apelido: '', store_id: '', ativo: true, percentual_comissao: 0 }
 
 export default function Vendedores() {
   const { company } = useApp()
@@ -56,7 +57,7 @@ export default function Vendedores() {
 
   function openEdit(v: Vendedor) {
     setEditing(v)
-    setForm({ nome: v.nome, apelido: v.apelido ?? '', store_id: v.store_id ?? '', ativo: v.ativo })
+    setForm({ nome: v.nome, apelido: v.apelido ?? '', store_id: v.store_id ?? '', ativo: v.ativo, percentual_comissao: v.percentual_comissao ?? 0 })
     setError(null)
     setShowForm(true)
   }
@@ -72,6 +73,7 @@ export default function Vendedores() {
         apelido: form.apelido.trim() || null,
         store_id: form.store_id || null,
         ativo: form.ativo,
+        percentual_comissao: form.percentual_comissao ?? 0,
       }
       if (editing) {
         const { error: e } = await supabase.from('vendedores').update(payload).eq('id', editing.id)
@@ -155,8 +157,11 @@ export default function Vendedores() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
-                    {(v.stores as any)?.nome ?? 'Todas as lojas'}
+                  <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                    <span>{(v.stores as any)?.nome ?? 'Todas as lojas'}</span>
+                    {v.percentual_comissao > 0 && (
+                      <span className="text-emerald-600 font-medium">{v.percentual_comissao}% comissão</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -235,6 +240,22 @@ export default function Vendedores() {
                     <option key={s.id} value={s.id}>{s.nome}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">% Comissão</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={form.percentual_comissao}
+                    onChange={e => setForm(f => ({ ...f, percentual_comissao: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-azure transition-colors pr-8"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input

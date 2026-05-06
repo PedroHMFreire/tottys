@@ -9,10 +9,11 @@ import { isUUID } from '@/lib/utils'
 import CelebracaoModal, { type CelebracaoData } from '@/components/metas/CelebracaoModal'
 import {
   Trophy, Target, TrendingUp, Clock,
-  UserCheck, RefreshCw,
+  UserCheck, RefreshCw, DollarSign,
 } from 'lucide-react'
 
 // ── Types ────────────────────────────────────────────────────
+type VendedorRow = { id: string; nome: string; apelido: string | null }
 type MetaRow = {
   meta_id: string; tipo: string; periodo: string
   inicio: string; fim: string; valor_meta: number
@@ -25,7 +26,9 @@ type CorrRow = {
   inicio: string; fim: string; realizado: number; pct: number; concluido: boolean
 }
 type RankRow = {
-  user_id: string; nome: string; faturamento: number; cupons: number; posicao: number
+  vendedor_id: string | null; user_id: string | null
+  nome: string; faturamento: number; cupons: number
+  ticket_medio: number; comissao: number; posicao: number
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -65,6 +68,13 @@ function medalBg(pos: number) {
   return 'bg-white text-slate-400 border-slate-200'
 }
 
+function savedVendedor(): VendedorRow | null {
+  try {
+    const s = localStorage.getItem('pdv_vendedor')
+    return s ? JSON.parse(s) : null
+  } catch { return null }
+}
+
 // ── Progress bar ─────────────────────────────────────────────
 function ProgressBar({ pct, color = 'bg-emerald-500' }: { pct: number; color?: string }) {
   return (
@@ -80,16 +90,23 @@ function ProgressBar({ pct, color = 'bg-emerald-500' }: { pct: number; color?: s
 // ── Main ─────────────────────────────────────────────────────
 export default function Performance() {
   const { user, store } = useApp()
-  const [metas, setMetas]           = useState<MetaRow[]>([])
-  const [corridinhas, setCorr]      = useState<CorrRow[]>([])
-  const [ranking, setRanking]       = useState<RankRow[]>([])
-  const [vendasHoje, setVendasHoje] = useState(0)
-  const [atendHoje, setAtendHoje]   = useState(0)
-  const [loading, setLoading]       = useState(true)
-  const [celebracao, setCelebracao] = useState<CelebracaoData | null>(null)
+  const [vendedores, setVendedores]   = useState<VendedorRow[]>([])
+  const [selected, setSelected]       = useState<VendedorRow | null>(savedVendedor)
+  const [metas, setMetas]             = useState<MetaRow[]>([])
+  const [corridinhas, setCorr]        = useState<CorrRow[]>([])
+  const [ranking, setRanking]         = useState<RankRow[]>([])
+  const [vendasHoje, setVendasHoje]   = useState(0)
+  const [atendHoje, setAtendHoje]     = useState(0)
+  const [loading, setLoading]         = useState(true)
+  const [celebracao, setCelebracao]   = useState<CelebracaoData | null>(null)
 
-  // Track which corridinhas already triggered celebration (avoid repeat)
   const celebratedRef = useRef<Set<string>>(new Set())
+
+  function selectVendedor(v: VendedorRow | null) {
+    setSelected(v)
+    if (v) localStorage.setItem('pdv_vendedor', JSON.stringify(v))
+    else localStorage.removeItem('pdv_vendedor')
+  }
 
   async function registrarAtendimento() {
     if (!user?.id || !store?.id || !isUUID(store.id)) return
@@ -114,25 +131,40 @@ export default function Performance() {
       const start = new Date(); start.setHours(0, 0, 0, 0)
       const end   = new Date(); end.setHours(23, 59, 59, 999)
 
-      // Resolve vendedor_id vinculado ao usuário logado (pode não existir)
-      const { data: vendRow } = await supabase
+      // Carrega lista de vendedores da loja (para o seletor)
+      const { data: vendsData } = await supabase
+        .from('vendedores')
+        .select('id, nome, apelido')
+        .eq('store_id', store.id)
+        .eq('ativo', true)
+        .order('nome')
+      setVendedores((vendsData ?? []) as VendedorRow[])
+
+      // Resolve vendedor_id para filtro de vendas
+      const vendedorId = selected?.id ?? (await supabase
         .from('vendedores')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle()
-      const vendedorId = vendRow?.id ?? null
+        .then(r => r.data?.id ?? null))
 
-      // Filtro de vendas: crédito por user_id OU por vendedor_id atribuído
-      const vendasFilter = vendedorId
-        ? `user_id.eq.${user.id},vendedor_id.eq.${vendedorId}`
-        : `user_id.eq.${user.id}`
+      const vendasFilter = selected
+        ? `vendedor_id.eq.${selected.id}`
+        : vendedorId
+          ? `user_id.eq.${user.id},vendedor_id.eq.${vendedorId}`
+          : `user_id.eq.${user.id}`
 
       const [metasRes, corrRes, rankRes, vendasRes, atendRes] = await Promise.all([
         supabase.rpc('get_metas_progresso', {
-          p_user_id: user.id, p_store_id: store.id, p_data: today,
+          p_user_id:     user.id,
+          p_store_id:    store.id,
+          p_data:        today,
+          p_vendedor_id: selected?.id ?? null,
         }),
         supabase.rpc('get_corridinhas_progresso', {
-          p_user_id: user.id, p_store_id: store.id,
+          p_user_id:     user.id,
+          p_store_id:    store.id,
+          p_vendedor_id: selected?.id ?? null,
         }),
         supabase.rpc('get_ranking_vendedores', { p_store_id: store.id }),
         supabase.from('sales')
@@ -150,9 +182,9 @@ export default function Performance() {
           .lte('registrado_at', end.toISOString()),
       ])
 
-      const metasList  = (metasRes.data  as MetaRow[] | null) ?? []
-      const corrList   = (corrRes.data   as CorrRow[] | null) ?? []
-      const rankList   = (rankRes.data   as RankRow[] | null) ?? []
+      const metasList   = (metasRes.data  as MetaRow[] | null) ?? []
+      const corrList    = (corrRes.data   as CorrRow[] | null) ?? []
+      const rankList    = (rankRes.data   as RankRow[] | null) ?? []
       const vendasTotal = (vendasRes.data ?? []).reduce((a: number, s: any) => a + Number(s.total || 0), 0)
       const atendCount  = atendRes.count ?? 0
 
@@ -162,7 +194,6 @@ export default function Performance() {
       setVendasHoje(vendasTotal)
       setAtendHoje(atendCount)
 
-      // Trigger celebration for newly completed corridinhas
       corrList.forEach(c => {
         if (c.concluido && !celebratedRef.current.has(c.corridinha_id)) {
           celebratedRef.current.add(c.corridinha_id)
@@ -178,20 +209,25 @@ export default function Performance() {
     }
   }
 
-  useEffect(() => { load() }, [user?.id, store?.id])
+  useEffect(() => { load() }, [user?.id, store?.id, selected?.id])
 
   const conversao = atendHoje > 0
     ? ((vendasHoje > 0 ? 1 : 0) / atendHoje * 100).toFixed(0)
     : '—'
 
-  const myRank = ranking.find(r => r.user_id === user?.id)
+  // Identifica linha do vendedor selecionado ou do usuário logado no ranking
+  const myRank = ranking.find(r =>
+    selected
+      ? r.vendedor_id === selected.id
+      : r.user_id === user?.id
+  )
 
   return (
     <div className="min-h-screen bg-[#0B0F1A] text-white pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#0B0F1A]/95 backdrop-blur border-b border-[#1E2D45] px-4 py-3 flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-lg leading-none">Minha Performance</h1>
+          <h1 className="font-bold text-lg leading-none">Performance</h1>
           <p className="text-xs text-slate-400 mt-0.5">{store?.nome ?? 'Selecione uma loja'}</p>
         </div>
         <button
@@ -204,16 +240,51 @@ export default function Performance() {
 
       <div className="px-4 pt-4 space-y-5">
 
+        {/* Seletor de vendedor */}
+        {vendedores.length > 0 && (
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">
+              Ver performance de
+            </p>
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              <button
+                onClick={() => selectVendedor(null)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  !selected
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'bg-[#111827] border-[#1E2D45] text-slate-400 hover:text-white'
+                }`}
+              >
+                Geral
+              </button>
+              {vendedores.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => selectVendedor(v)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    selected?.id === v.id
+                      ? 'bg-emerald-600 border-emerald-600 text-white'
+                      : 'bg-[#111827] border-[#1E2D45] text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {v.apelido ?? v.nome}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* KPIs do dia */}
         <section>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Hoje</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">
+            Hoje{selected ? ` · ${selected.apelido ?? selected.nome}` : ''}
+          </p>
           <div className="grid grid-cols-3 gap-3">
             <KpiCard icon={<TrendingUp size={16} />} label="Vendas" value={formatBRL(vendasHoje)} color="emerald" />
             <KpiCard icon={<UserCheck size={16} />} label="Atendimentos" value={String(atendHoje)} color="blue" />
             <KpiCard icon={<Target size={16} />} label="Conversão" value={`${conversao}%`} color="violet" />
           </div>
 
-          {/* Botão registrar atendimento */}
           <button
             onClick={registrarAtendimento}
             className="mt-3 w-full py-3.5 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl font-semibold text-sm transition-all"
@@ -230,29 +301,49 @@ export default function Performance() {
               Ranking da equipe — mês
             </p>
             <div className="space-y-2">
-              {ranking.slice(0, 5).map(r => (
-                <div
-                  key={r.user_id}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${
-                    r.user_id === user?.id
-                      ? 'bg-emerald-900/40 border-emerald-700'
-                      : 'bg-[#111827] border-[#1E2D45]'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 ${medalBg(r.posicao)}`}>
-                    {r.posicao === 1 ? '🥇' : r.posicao === 2 ? '🥈' : r.posicao === 3 ? '🥉' : r.posicao}
+              {ranking.slice(0, 5).map(r => {
+                const isMine = selected
+                  ? r.vendedor_id === selected.id
+                  : r.user_id === user?.id
+                return (
+                  <div
+                    key={r.vendedor_id ?? r.user_id}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${
+                      isMine
+                        ? 'bg-emerald-900/40 border-emerald-700'
+                        : 'bg-[#111827] border-[#1E2D45]'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 ${medalBg(r.posicao)}`}>
+                      {r.posicao === 1 ? '🥇' : r.posicao === 2 ? '🥈' : r.posicao === 3 ? '🥉' : r.posicao}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate leading-none">
+                        {r.nome}{isMine ? ' (você)' : ''}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-slate-400">{r.cupons} vendas</p>
+                        {r.ticket_medio > 0 && (
+                          <p className="text-xs text-slate-500">· ticket {formatBRL(r.ticket_medio)}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-emerald-400">{formatBRL(r.faturamento)}</p>
+                      {r.comissao > 0 && (
+                        <p className="text-xs text-amber-400 flex items-center gap-0.5 justify-end mt-0.5">
+                          <DollarSign size={10} />
+                          {formatBRL(r.comissao)}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate leading-none">{r.nome}{r.user_id === user?.id ? ' (você)' : ''}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{r.cupons} vendas</p>
-                  </div>
-                  <p className="text-sm font-bold text-emerald-400 shrink-0">{formatBRL(r.faturamento)}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
             {myRank && myRank.posicao > 5 && (
               <div className="mt-2 px-4 py-2 bg-[#111827] border border-[#1E2D45] rounded-xl text-xs text-slate-400 text-center">
-                Você está em {myRank.posicao}º lugar com {formatBRL(myRank.faturamento)}
+                {selected ? (selected.apelido ?? selected.nome) : 'Você'} está em {myRank.posicao}º lugar com {formatBRL(myRank.faturamento)}
               </div>
             )}
           </section>
@@ -297,8 +388,6 @@ export default function Performance() {
       </div>
 
       <TabBar />
-
-      {/* Celebração */}
       <CelebracaoModal data={celebracao} onClose={() => setCelebracao(null)} />
     </div>
   )
@@ -353,9 +442,9 @@ function MetaCard({ m }: { m: MetaRow }) {
 function CorridinhaCard({ c }: { c: CorrRow }) {
   const done = c.concluido
   const tipoColor = {
-    INDIVIDUAL:   'text-violet-400 bg-violet-900/30 border-violet-800',
-    COLETIVA:     'text-blue-400   bg-blue-900/30   border-blue-800',
-    COMPETITIVA:  'text-amber-400  bg-amber-900/30  border-amber-800',
+    INDIVIDUAL:  'text-violet-400 bg-violet-900/30 border-violet-800',
+    COLETIVA:    'text-blue-400   bg-blue-900/30   border-blue-800',
+    COMPETITIVA: 'text-amber-400  bg-amber-900/30  border-amber-800',
   }[c.tipo] ?? 'text-slate-400 bg-slate-800 border-slate-700'
 
   return (
