@@ -4,6 +4,7 @@ import { useApp } from '@/state/store'
 import { formatBRL } from '@/lib/currency'
 import Button from '@/ui/Button'
 import KPI from '@/ui/KPI'
+import { Plus, Trash2, Store } from 'lucide-react'
 
 type CashbackConfig = {
   pct_bronze: number
@@ -35,11 +36,21 @@ type TopCliente = {
   cashback_total_gasto: number
 }
 
+type CashbackGroup = {
+  id: string
+  nome: string
+  cor: string
+}
+
+type StoreRow = {
+  id: string
+  nome: string
+  cashback_group_id: string | null
+  cashback_ativo: boolean
+}
+
 const TIER_LABEL: Record<string, string> = {
-  BRONZE: 'Bronze',
-  PRATA:  'Prata',
-  OURO:   'Ouro',
-  VIP:    'VIP',
+  BRONZE: 'Bronze', PRATA: 'Prata', OURO: 'Ouro', VIP: 'VIP',
 }
 const TIER_COLOR: Record<string, string> = {
   BRONZE: 'bg-amber-100 text-amber-700',
@@ -47,6 +58,8 @@ const TIER_COLOR: Record<string, string> = {
   OURO:   'bg-yellow-100 text-yellow-700',
   VIP:    'bg-purple-100 text-purple-700',
 }
+
+const GROUP_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
 const DEFAULT_MSG =
   'Olá {{nome}}! Você tem *R$ {{saldo}}* de cashback esperando por você na {{empresa}}. Venha aproveitar! 🎉'
@@ -68,36 +81,39 @@ export default function CashbackConfig() {
   const [showForm, setShowForm] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Grupos e lojas
+  const [groups, setGroups] = useState<CashbackGroup[]>([])
+  const [stores, setStores] = useState<StoreRow[]>([])
+  const [showGroupForm, setShowGroupForm] = useState(false)
+  const [newGroupNome, setNewGroupNome] = useState('')
+  const [newGroupCor, setNewGroupCor] = useState(GROUP_COLORS[0])
+  const [savingGroup, setSavingGroup] = useState(false)
+
   useEffect(() => {
-    if (company?.id) { loadConfig(); loadDashboard(); loadTopClientes() }
+    if (company?.id) {
+      loadConfig()
+      loadDashboard()
+      loadTopClientes()
+      loadGroupsAndStores()
+    }
   }, [company?.id])
 
   async function loadConfig() {
     if (!company?.id) return
     const { data } = await supabase
-      .from('cashback_config')
-      .select('*')
-      .eq('company_id', company.id)
-      .maybeSingle()
-    if (data) {
-      setConfig(data as CashbackConfig)
-      setForm(data as CashbackConfig)
-    } else {
-      setConfig(null)
-    }
+      .from('cashback_config').select('*').eq('company_id', company.id).maybeSingle()
+    if (data) { setConfig(data as CashbackConfig); setForm(data as CashbackConfig) }
+    else setConfig(null)
   }
 
   async function loadDashboard() {
     if (!company?.id) return
     setLoading(true)
     try {
-      // Expira cashback vencido antes de carregar o dashboard
       await supabase.rpc('fn_expirar_cashback', { p_company_id: company.id })
       const { data } = await supabase.rpc('fn_cashback_dashboard', { p_company_id: company.id })
       if (data) setDashboard(data as Dashboard)
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   async function loadTopClientes() {
@@ -112,21 +128,57 @@ export default function CashbackConfig() {
     setTopClientes((data || []) as TopCliente[])
   }
 
+  async function loadGroupsAndStores() {
+    if (!company?.id) return
+    const [grpRes, stRes] = await Promise.all([
+      supabase.from('cashback_groups').select('id, nome, cor').eq('company_id', company.id).order('nome'),
+      supabase.from('stores').select('id, nome, cashback_group_id, cashback_ativo').eq('company_id', company.id).order('nome'),
+    ])
+    setGroups((grpRes.data ?? []) as CashbackGroup[])
+    setStores((stRes.data ?? []) as StoreRow[])
+  }
+
   async function saveConfig() {
     if (!company?.id) return
     setSaving(true)
     try {
-      await supabase
-        .from('cashback_config')
+      await supabase.from('cashback_config')
         .upsert({ ...form, company_id: company.id, updated_at: new Date().toISOString() })
       await loadConfig()
       await loadDashboard()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
       setShowForm(false)
-    } finally {
-      setSaving(false)
-    }
+    } finally { setSaving(false) }
+  }
+
+  async function createGroup() {
+    if (!company?.id || !newGroupNome.trim()) return
+    setSavingGroup(true)
+    try {
+      await supabase.from('cashback_groups').insert({
+        company_id: company.id, nome: newGroupNome.trim(), cor: newGroupCor,
+      })
+      setNewGroupNome('')
+      setNewGroupCor(GROUP_COLORS[0])
+      setShowGroupForm(false)
+      await loadGroupsAndStores()
+    } finally { setSavingGroup(false) }
+  }
+
+  async function deleteGroup(id: string) {
+    await supabase.from('cashback_groups').delete().eq('id', id)
+    await loadGroupsAndStores()
+  }
+
+  async function updateStoreGroup(storeId: string, groupId: string | null) {
+    await supabase.from('stores').update({ cashback_group_id: groupId }).eq('id', storeId)
+    setStores(prev => prev.map(s => s.id === storeId ? { ...s, cashback_group_id: groupId } : s))
+  }
+
+  async function toggleStoreAtivo(storeId: string, ativo: boolean) {
+    await supabase.from('stores').update({ cashback_ativo: ativo }).eq('id', storeId)
+    setStores(prev => prev.map(s => s.id === storeId ? { ...s, cashback_ativo: ativo } : s))
   }
 
   function f(v: string | number | boolean) { return String(v) }
@@ -192,6 +244,119 @@ export default function CashbackConfig() {
           </div>
         )}
 
+        {/* Grupos de cashback */}
+        {company?.id && (
+          <div className="rounded-2xl border bg-white p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Grupos de Cashback</div>
+              <button
+                onClick={() => setShowGroupForm(true)}
+                className="flex items-center gap-1 text-xs text-azure hover:text-azure-dark transition-colors cursor-pointer"
+              >
+                <Plus size={12} />Novo grupo
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400 -mt-1">
+              Lojas no mesmo grupo compartilham saldo de cashback com o cliente.
+            </p>
+
+            {showGroupForm && (
+              <div className="border border-slate-100 rounded-xl p-3 space-y-2 bg-slate-50">
+                <input
+                  value={newGroupNome}
+                  onChange={e => setNewGroupNome(e.target.value)}
+                  placeholder="Nome do grupo (ex: Matriz + Filial 1)"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-azure"
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Cor:</span>
+                  <div className="flex gap-1.5">
+                    {GROUP_COLORS.map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setNewGroupCor(c)}
+                        style={{ background: c }}
+                        className={`w-5 h-5 rounded-full transition-all cursor-pointer ${newGroupCor === c ? 'ring-2 ring-offset-1 ring-slate-400' : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowGroupForm(false)} className="flex-1 text-xs border rounded-lg py-1.5 hover:bg-white cursor-pointer">Cancelar</button>
+                  <button
+                    onClick={createGroup}
+                    disabled={!newGroupNome.trim() || savingGroup}
+                    className="flex-1 text-xs bg-primary text-white rounded-lg py-1.5 disabled:opacity-40 cursor-pointer"
+                  >
+                    {savingGroup ? 'Salvando…' : 'Criar grupo'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {groups.length === 0 && !showGroupForm && (
+              <div className="text-xs text-slate-400 text-center py-2">Nenhum grupo criado ainda.</div>
+            )}
+            {groups.map(g => (
+              <div key={g.id} className="flex items-center gap-2 text-sm">
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ background: g.cor }} />
+                <span className="flex-1 font-medium">{g.nome}</span>
+                <span className="text-xs text-slate-400">{stores.filter(s => s.cashback_group_id === g.id).length} loja(s)</span>
+                <button
+                  onClick={() => deleteGroup(g.id)}
+                  className="p-1 text-slate-300 hover:text-rose-500 transition-colors cursor-pointer"
+                  title="Excluir grupo"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Lojas — grupo e ativo/inativo */}
+        {company?.id && stores.length > 0 && (
+          <div className="rounded-2xl border bg-white p-3 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <Store size={14} className="text-slate-400" />
+              <div className="text-sm font-medium">Configuração por loja</div>
+            </div>
+            {stores.map(s => (
+              <div key={s.id} className="flex items-center gap-3 py-2 border-b last:border-b-0">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{s.nome}</div>
+                </div>
+
+                {/* Grupo */}
+                <select
+                  value={s.cashback_group_id ?? ''}
+                  onChange={e => updateStoreGroup(s.id, e.target.value || null)}
+                  className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-azure cursor-pointer"
+                >
+                  <option value="">Sem grupo</option>
+                  {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.nome}</option>
+                  ))}
+                </select>
+
+                {/* Toggle cashback ativo */}
+                <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={s.cashback_ativo}
+                    onChange={e => toggleStoreAtivo(s.id, e.target.checked)}
+                    className="w-3.5 h-3.5 accent-emerald-500"
+                  />
+                  <span className={`text-xs font-medium ${s.cashback_ativo ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {s.cashback_ativo ? 'Ativo' : 'Inativo'}
+                  </span>
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Top clientes */}
         {topClientes.length > 0 && (
           <div className="rounded-2xl border bg-white p-3">
@@ -228,7 +393,6 @@ export default function CashbackConfig() {
               <button onClick={() => setShowForm(false)} className="text-zinc-500 text-sm">fechar</button>
             </div>
 
-            {/* Ativo */}
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -239,7 +403,6 @@ export default function CashbackConfig() {
               <span className="text-sm font-medium">Cashback ativo</span>
             </label>
 
-            {/* Percentuais */}
             <div>
               <div className="text-xs text-zinc-500 font-medium mb-2">Percentual de cashback por tier</div>
               <div className="grid grid-cols-2 gap-2">
@@ -257,7 +420,6 @@ export default function CashbackConfig() {
               </div>
             </div>
 
-            {/* Thresholds */}
             <div>
               <div className="text-xs text-zinc-500 font-medium mb-2">Threshold de tier (total gasto em R$)</div>
               <div className="grid grid-cols-3 gap-2">
@@ -275,7 +437,6 @@ export default function CashbackConfig() {
               </div>
             </div>
 
-            {/* Resgate mínimo */}
             <div>
               <div className="text-xs text-zinc-500 mb-1">Resgate mínimo (R$)</div>
               <input
@@ -286,7 +447,6 @@ export default function CashbackConfig() {
               />
             </div>
 
-            {/* Expiração */}
             <div>
               <div className="text-xs text-zinc-500 mb-1">Validade do cashback (dias) — 0 = sem expiração</div>
               <input
@@ -297,12 +457,9 @@ export default function CashbackConfig() {
               />
             </div>
 
-            {/* Mensagem de reativação */}
             <div>
               <div className="text-xs text-zinc-500 mb-1">Mensagem WhatsApp de reativação</div>
-              <div className="text-xs text-zinc-400 mb-1">
-                Variáveis: {'{{nome}}'} {'{{saldo}}'} {'{{empresa}}'}
-              </div>
+              <div className="text-xs text-zinc-400 mb-1">Variáveis: {'{{nome}}'} {'{{saldo}}'} {'{{empresa}}'}</div>
               <textarea
                 value={form.msg_reativacao || ''}
                 onChange={e => setForm(p => ({ ...p, msg_reativacao: e.target.value }))}
@@ -320,8 +477,6 @@ export default function CashbackConfig() {
           </div>
         </div>
       )}
-
-
     </div>
   )
 }

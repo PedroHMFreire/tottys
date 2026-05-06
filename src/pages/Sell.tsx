@@ -1,5 +1,5 @@
 // src/pages/Sell.tsx
-import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabaseClient'
 import { useApp } from '@/state/store'
@@ -206,6 +206,7 @@ export default function Sell() {
 
   /* -------- Cliente / Cashback -------- */
   const [selectedCustomer, setSelectedCustomer] = useState<SelectedCustomer | null>(null)
+  const [cashbackSaldoGrupo, setCashbackSaldoGrupo] = useState(0)
   const [showResgate, setShowResgate] = useState(false)
   const [resgateAplicado, setResgateAplicado] = useState(0)
   const [resgateMinimo, setResgateMinimo] = useState(5)
@@ -215,6 +216,17 @@ export default function Sell() {
     supabase.from('cashback_config').select('resgate_minimo').eq('company_id', company.id).maybeSingle()
       .then(({ data }) => { if (data?.resgate_minimo) setResgateMinimo(data.resgate_minimo) })
   }, [company?.id])
+
+  // Busca saldo específico do grupo/loja ao selecionar cliente ou trocar loja
+  useEffect(() => {
+    if (!selectedCustomer?.id || !store?.id) { setCashbackSaldoGrupo(0); return }
+    supabase.rpc('fn_get_cashback_saldo', {
+      p_customer_id: selectedCustomer.id,
+      p_store_id: store.id,
+    }).then(({ data }) => {
+      setCashbackSaldoGrupo(Number((data as any)?.saldo ?? 0))
+    })
+  }, [selectedCustomer?.id, store?.id])
 
   /* -------- Carrinho -------- */
   const [cart, setCart] = useState<CartItem[]>([])
@@ -235,7 +247,7 @@ export default function Sell() {
   }
 
   useEffect(() => { if (cart.length === 0) setConfirmClear(false) }, [cart.length])
-  useEffect(() => { setCart([]); stockCache.current.clear(); setSelectedVendedor(null) }, [store?.id])
+  useEffect(() => { setCart([]); stockCache.current.clear(); setSelectedVendedor(null); setCashbackSaldoGrupo(0) }, [store?.id])
 
   /* -------- Histórico & KPIs -------- */
   const [salesHistory, setSalesHistory] = useState<any[]>([])
@@ -573,6 +585,7 @@ export default function Sell() {
                 p_customer_id: selectedCustomer.id,
                 p_valor_resgate: resgateAplicado,
                 p_sale_id: saleId,
+                p_store_id: store.id,
               })
             }
             const { data: cbData } = await supabase.rpc('fn_creditar_cashback', {
@@ -580,6 +593,7 @@ export default function Sell() {
               p_customer_id: selectedCustomer.id,
               p_sale_id: saleId,
               p_valor_venda: totalFinal,
+              p_store_id: store.id,
             })
             const cb = cbData as any
             if (cb?.ok && cb?.credito > 0) {
@@ -1065,13 +1079,13 @@ export default function Sell() {
               </button>
             </div>
 
-            {selectedCustomer && selectedCustomer.cashback_saldo > 0 && (
+            {selectedCustomer && cashbackSaldoGrupo > 0 && (
               <button
                 onClick={() => setShowResgate(true)}
                 disabled={cart.length === 0}
                 className={`w-full h-11 rounded-xl border text-sm font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${resgateAplicado > 0 ? 'border-purple-300 bg-purple-50 text-purple-700' : 'border-purple-200 bg-white text-purple-600 hover:bg-purple-50'}`}
               >
-                {resgateAplicado > 0 ? `Cashback: − ${formatBRL(resgateAplicado)}` : `Usar cashback (${formatBRL(selectedCustomer.cashback_saldo)})`}
+                {resgateAplicado > 0 ? `Cashback: − ${formatBRL(resgateAplicado)}` : `Usar cashback (${formatBRL(cashbackSaldoGrupo)})`}
               </button>
             )}
 
@@ -1206,7 +1220,7 @@ export default function Sell() {
 
         {showResgate && selectedCustomer && (
           <ResgateModal
-            customer={selectedCustomer}
+            customer={{ ...selectedCustomer, cashback_saldo: cashbackSaldoGrupo }}
             cartTotal={total - descontoValor}
             resgateMinimo={resgateMinimo}
             onApply={v => setResgateAplicado(v)}
