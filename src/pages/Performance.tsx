@@ -8,8 +8,8 @@ import TabBar from '@/ui/TabBar'
 import { isUUID } from '@/lib/utils'
 import CelebracaoModal, { type CelebracaoData } from '@/components/metas/CelebracaoModal'
 import {
-  Trophy, Target, TrendingUp, Users, Zap, Clock,
-  UserCheck, ChevronRight, RefreshCw,
+  Trophy, Target, TrendingUp, Clock,
+  UserCheck, RefreshCw,
 } from 'lucide-react'
 
 // ── Types ────────────────────────────────────────────────────
@@ -114,6 +114,19 @@ export default function Performance() {
       const start = new Date(); start.setHours(0, 0, 0, 0)
       const end   = new Date(); end.setHours(23, 59, 59, 999)
 
+      // Resolve vendedor_id vinculado ao usuário logado (pode não existir)
+      const { data: vendRow } = await supabase
+        .from('vendedores')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      const vendedorId = vendRow?.id ?? null
+
+      // Filtro de vendas: crédito por user_id OU por vendedor_id atribuído
+      const vendasFilter = vendedorId
+        ? `user_id.eq.${user.id},vendedor_id.eq.${vendedorId}`
+        : `user_id.eq.${user.id}`
+
       const [metasRes, corrRes, rankRes, vendasRes, atendRes] = await Promise.all([
         supabase.rpc('get_metas_progresso', {
           p_user_id: user.id, p_store_id: store.id, p_data: today,
@@ -125,8 +138,8 @@ export default function Performance() {
         supabase.from('sales')
           .select('total')
           .eq('store_id', store.id)
-          .eq('user_id', user.id)
           .eq('status', 'PAGA')
+          .or(vendasFilter)
           .gte('created_at', start.toISOString())
           .lte('created_at', end.toISOString()),
         supabase.from('atendimentos')
