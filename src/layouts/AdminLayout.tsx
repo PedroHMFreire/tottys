@@ -10,6 +10,7 @@ import {
   Bell, Wallet, FileText, TrendingUp, UserCog, Store, Settings,
   Layers, Tag, Printer, Menu, X, LogOut, Building2, ShoppingBag,
   MessageSquare, UserCheck, Gift, Target, ContactRound, BrainCircuit,
+  Smartphone,
   type LucideIcon,
 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -60,6 +61,12 @@ const NAV: NavGroup[] = [
       { to: '/contas-pagar', label: 'Contas a Pagar',  Icon: FileText,    area: 'FINANCEIRO' },
       { to: '/crediario',    label: 'Crediário',        Icon: CreditCard,  area: 'CREDIARIO'  },
       { to: '/cobranca',     label: 'Cobranças',        Icon: Bell,        area: 'CREDIARIO'  },
+    ],
+  },
+  {
+    group: 'Comunicação',
+    items: [
+      { to: '/adm/whatsapp', label: 'WhatsApp', Icon: Smartphone, area: 'CLIENTES' },
     ],
   },
   {

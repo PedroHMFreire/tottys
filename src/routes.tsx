@@ -43,6 +43,7 @@ import Vendedores from '@/pages/Vendedores'
 import CRM from '@/pages/CRM'
 import CustomerProfile from '@/pages/CustomerProfile'
 import Paulo from '@/pages/Paulo'
+import WhatsApp from '@/pages/WhatsApp'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -104,6 +105,7 @@ const router = createBrowserRouter([
       { path: '/adm/vendedores',   element: <Vendedores /> },
       { path: '/adm/crm',          element: <CRM /> },
       { path: '/adm/paulo',        element: <Paulo /> },
+      { path: '/adm/whatsapp',    element: <WhatsApp /> },
 
       // Rotas funcionais
       { path: '/products',     element: <Products /> },
