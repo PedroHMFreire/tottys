@@ -114,6 +114,19 @@ serve(async (req) => {
       qr_code:    status === 'connected' ? null  : undefined,
       updated_at: new Date().toISOString(),
     }).eq('id', inst.id)
+
+    // Ao reconectar, dispara processamento da fila de mensagens pendentes
+    if (status === 'connected') {
+      const queueUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/fn-wa-process-queue`
+      fetch(queueUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ company_id: inst.company_id }),
+      }).catch(e => console.error('queue trigger error:', e))
+    }
   }
 
   // ── qrcode.updated ─────────────────────────────────────────────────────────

@@ -600,6 +600,28 @@ export default function Sell() {
               pushToast('success', cb.subiu_tier
                 ? `Cashback de ${formatBRL(cb.credito)} creditado! Parabéns, agora é ${cb.tier_novo}!`
                 : `Cashback de ${formatBRL(cb.credito)} creditado para ${selectedCustomer.nome}.`)
+
+              // Enfileira notificação WhatsApp se o cliente tem telefone cadastrado
+              if (selectedCustomer.contato) {
+                try {
+                  const novoSaldo = selectedCustomer.cashback_saldo + cb.credito
+                  const waMsg = cb.subiu_tier
+                    ? `Olá, ${selectedCustomer.nome}! 🎉 Você ganhou *${formatBRL(cb.credito)}* de cashback e subiu para o nível *${cb.tier_novo}*! 💰 Saldo: *${formatBRL(novoSaldo)}*. Use na próxima visita!`
+                    : `Olá, ${selectedCustomer.nome}! 🛍️ Você ganhou *${formatBRL(cb.credito)}* de cashback nesta compra. 💰 Saldo atual: *${formatBRL(novoSaldo)}*. Use na próxima visita!`
+                  await supabase.from('wa_message_queue').insert({
+                    company_id: company.id,
+                    customer_phone: selectedCustomer.contato,
+                    customer_name: selectedCustomer.nome,
+                    message: waMsg,
+                  })
+                  // Fire and forget: dispara envio imediato se WA estiver conectado
+                  supabase.functions.invoke('fn-wa-process-queue', {
+                    body: { company_id: company.id },
+                  }).catch(() => {})
+                } catch (err) {
+                  console.error('[wa-queue] falha ao enfileirar mensagem de cashback:', err)
+                }
+              }
             }
           } catch (err) {
             console.error('[cashback] falha ao creditar/resgatar:', err)
