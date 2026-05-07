@@ -1,3 +1,4 @@
+// @ts-nocheck — Deno runtime; Node.js TS compiler não reconhece imports Deno
 // Edge Function: fn-wa-qr
 // Cria/conecta instância na Evolution API e retorna QR code
 // POST body: { instance_id }

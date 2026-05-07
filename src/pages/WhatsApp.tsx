@@ -4,6 +4,7 @@ import { useApp } from '@/state/store'
 import {
   Smartphone, Plus, Loader2, X, Send, RefreshCw,
   CheckCircle2, XCircle, Clock, MessageCircle, Store,
+  Paperclip, FileText, Music,
 } from 'lucide-react'
 
 type WaInstance = {
@@ -33,9 +34,20 @@ type WaMessage = {
   content: string
   status: string
   created_at: string
+  media_url?: string | null
+  media_type?: string | null
+}
+
+type AttachedFile = {
+  file: File
+  base64: string
+  preview: string | null  // data URL para imagens
+  mimetype: string
 }
 
 type StoreOpt = { id: string; nome: string }
+
+// ── Sub-componentes ──────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: WaInstance['status'] }) {
   if (status === 'connected') return (
@@ -55,38 +67,104 @@ function StatusBadge({ status }: { status: WaInstance['status'] }) {
   )
 }
 
+function MediaBubble({ url, type, content, isOutbound }: {
+  url: string
+  type: string
+  content: string
+  isOutbound: boolean
+}) {
+  const caption = !content.startsWith('[') ? content : ''
+
+  if (type.startsWith('image/')) {
+    return (
+      <div className="space-y-1">
+        <img
+          src={url}
+          alt="imagem"
+          className="max-w-[240px] max-h-[240px] rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity block"
+          onClick={() => window.open(url, '_blank')}
+        />
+        {caption && <p className="text-sm">{caption}</p>}
+      </div>
+    )
+  }
+
+  if (type.startsWith('video/')) {
+    return (
+      <div className="space-y-1">
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          src={url}
+          controls
+          className="max-w-[280px] rounded-xl block"
+          style={{ maxHeight: '200px' }}
+        />
+        {caption && <p className="text-sm">{caption}</p>}
+      </div>
+    )
+  }
+
+  if (type.startsWith('audio/')) {
+    return (
+      <div className="flex items-center gap-2">
+        <Music size={14} className={`shrink-0 ${isOutbound ? 'text-emerald-100' : 'text-slate-400'}`} />
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <audio src={url} controls style={{ height: '32px', minWidth: '180px' }} />
+      </div>
+    )
+  }
+
+  // Documento / outro
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className={`flex items-center gap-2 text-sm underline ${isOutbound ? 'text-emerald-50' : 'text-blue-600'}`}
+    >
+      <FileText size={14} className="shrink-0" />
+      <span className="truncate max-w-[200px]">{content || 'Arquivo'}</span>
+    </a>
+  )
+}
+
+// ── Página principal ─────────────────────────────────────────────────────────
+
 export default function WhatsApp() {
   const { company } = useApp()
   const [tab, setTab] = useState<'connections' | 'inbox'>('connections')
 
-  // ── Instâncias ──
-  const [instances, setInstances] = useState<WaInstance[]>([])
+  // Instâncias
+  const [instances, setInstances]     = useState<WaInstance[]>([])
   const [loadingInst, setLoadingInst] = useState(false)
   const [showNewInst, setShowNewInst] = useState(false)
-  const [newLabel, setNewLabel] = useState('')
-  const [newStoreId, setNewStoreId] = useState<string>('')
-  const [savingInst, setSavingInst] = useState(false)
-  const [storeList, setStoreList] = useState<StoreOpt[]>([])
+  const [newLabel, setNewLabel]       = useState('')
+  const [newStoreId, setNewStoreId]   = useState<string>('')
+  const [savingInst, setSavingInst]   = useState(false)
+  const [storeList, setStoreList]     = useState<StoreOpt[]>([])
 
-  // ── QR Modal ──
+  // QR Modal
   const [qrInstance, setQrInstance] = useState<WaInstance | null>(null)
-  const [qrCode, setQrCode] = useState<string | null>(null)
-  const [loadingQr, setLoadingQr] = useState(false)
+  const [qrCode, setQrCode]         = useState<string | null>(null)
+  const [loadingQr, setLoadingQr]   = useState(false)
   const qrIntervalRef = useRef<number | null>(null)
 
-  // ── Inbox ──
+  // Inbox
   const [selectedInstance, setSelectedInstance] = useState<WaInstance | null>(null)
-  const [conversations, setConversations] = useState<WaConversation[]>([])
-  const [loadingConvs, setLoadingConvs] = useState(false)
-  const [selectedConv, setSelectedConv] = useState<WaConversation | null>(null)
-  const [messages, setMessages] = useState<WaMessage[]>([])
-  const [loadingMsgs, setLoadingMsgs] = useState(false)
-  const [sendText, setSendText] = useState('')
-  const [sending, setSending] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [conversations, setConversations]       = useState<WaConversation[]>([])
+  const [loadingConvs, setLoadingConvs]         = useState(false)
+  const [selectedConv, setSelectedConv]         = useState<WaConversation | null>(null)
+  const [messages, setMessages]                 = useState<WaMessage[]>([])
+  const [loadingMsgs, setLoadingMsgs]           = useState(false)
+  const [sendText, setSendText]                 = useState('')
+  const [sending, setSending]                   = useState(false)
+  const [attachedFile, setAttachedFile]         = useState<AttachedFile | null>(null)
 
-  // ── Load ──
+  const bottomRef  = useRef<HTMLDivElement>(null)
+  const inputRef   = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Carregamento inicial ──
   useEffect(() => {
     if (company?.id) { loadInstances(); loadStores() }
   }, [company?.id])
@@ -109,10 +187,10 @@ export default function WhatsApp() {
     setStoreList((data ?? []) as StoreOpt[])
   }
 
-  // Realtime para status das instâncias (QR + conexão)
+  // Realtime: status das instâncias (QR + conexão)
   useEffect(() => {
     if (!company?.id) return
-    const channel = supabase
+    const ch = supabase
       .channel('wa_instances_changes')
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'wa_instances',
@@ -120,22 +198,17 @@ export default function WhatsApp() {
       }, payload => {
         const updated = payload.new as WaInstance
         setInstances(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i))
-
-        // Se estava mostrando QR desta instância, atualiza
         if (qrInstance?.id === updated.id) {
-          if (updated.status === 'connected') {
-            closeQrModal()
-          } else if (updated.qr_code) {
-            setQrCode(updated.qr_code)
-          }
+          if (updated.status === 'connected') closeQrModal()
+          else if (updated.qr_code) setQrCode(updated.qr_code)
         }
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { supabase.removeChannel(ch) }
   }, [company?.id, qrInstance?.id])
 
-  // ── Nova instância ──
-  function instanceName(label: string) {
+  // ── Instâncias ──
+  function buildInstanceName(label: string) {
     return `tottys-${company!.id.slice(0, 8)}-${label.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 20)}-${Date.now().toString(36)}`
   }
 
@@ -144,55 +217,16 @@ export default function WhatsApp() {
     setSavingInst(true)
     try {
       const { data, error } = await supabase.from('wa_instances').insert({
-        company_id: company.id,
-        store_id: newStoreId || null,
-        instance_name: instanceName(newLabel.trim()),
-        label: newLabel.trim(),
-        status: 'disconnected',
+        company_id:    company.id,
+        store_id:      newStoreId || null,
+        instance_name: buildInstanceName(newLabel.trim()),
+        label:         newLabel.trim(),
+        status:        'disconnected',
       }).select('id, label, instance_name, status, phone, store_id, qr_code').single()
-
       if (error) throw error
       setInstances(prev => [...prev, data as WaInstance])
-      setNewLabel('')
-      setNewStoreId('')
-      setShowNewInst(false)
-    } finally {
-      setSavingInst(false)
-    }
-  }
-
-  // ── QR ──
-  async function openQr(inst: WaInstance) {
-    setQrInstance(inst)
-    setQrCode(null)
-    setLoadingQr(true)
-    await fetchQr(inst)
-    setLoadingQr(false)
-
-    // Refresca QR a cada 25s (expiração WhatsApp)
-    qrIntervalRef.current = window.setInterval(() => fetchQr(inst), 25_000)
-  }
-
-  async function fetchQr(inst: WaInstance) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const res = await supabase.functions.invoke('fn-wa-qr', {
-        body: { instance_id: inst.id },
-      })
-      if (res.data?.qr) setQrCode(res.data.qr)
-      if (res.data?.status === 'connected') closeQrModal()
-    } catch { /* silently ignore */ }
-  }
-
-  function closeQrModal() {
-    setQrInstance(null)
-    setQrCode(null)
-    if (qrIntervalRef.current) {
-      clearInterval(qrIntervalRef.current)
-      qrIntervalRef.current = null
-    }
-    loadInstances()
+      setNewLabel(''); setNewStoreId(''); setShowNewInst(false)
+    } finally { setSavingInst(false) }
   }
 
   async function disconnectInstance(inst: WaInstance) {
@@ -207,11 +241,31 @@ export default function WhatsApp() {
     setInstances(prev => prev.filter(i => i.id !== inst.id))
   }
 
+  // ── QR ──
+  async function openQr(inst: WaInstance) {
+    setQrInstance(inst); setQrCode(null); setLoadingQr(true)
+    await fetchQr(inst)
+    setLoadingQr(false)
+    qrIntervalRef.current = window.setInterval(() => fetchQr(inst), 25_000)
+  }
+
+  async function fetchQr(inst: WaInstance) {
+    try {
+      const res = await supabase.functions.invoke('fn-wa-qr', { body: { instance_id: inst.id } })
+      if (res.data?.qr) setQrCode(res.data.qr)
+      if (res.data?.status === 'connected') closeQrModal()
+    } catch { /* ignore */ }
+  }
+
+  function closeQrModal() {
+    setQrInstance(null); setQrCode(null)
+    if (qrIntervalRef.current) { clearInterval(qrIntervalRef.current); qrIntervalRef.current = null }
+    loadInstances()
+  }
+
   // ── Inbox ──
   async function loadConversations(inst: WaInstance) {
-    setSelectedInstance(inst)
-    setSelectedConv(null)
-    setMessages([])
+    setSelectedInstance(inst); setSelectedConv(null); setMessages([])
     setLoadingConvs(true)
     const { data } = await supabase
       .from('wa_conversations')
@@ -224,16 +278,14 @@ export default function WhatsApp() {
   }
 
   async function openConversation(conv: WaConversation) {
-    setSelectedConv(conv)
-    setLoadingMsgs(true)
-    // Zera unread
+    setSelectedConv(conv); setLoadingMsgs(true)
     if (conv.unread_count > 0) {
       await supabase.from('wa_conversations').update({ unread_count: 0 }).eq('id', conv.id)
       setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c))
     }
     const { data } = await supabase
       .from('wa_messages')
-      .select('id, direction, content, status, created_at')
+      .select('id, direction, content, status, created_at, media_url, media_type')
       .eq('conversation_id', conv.id)
       .order('created_at', { ascending: true })
       .limit(100)
@@ -241,30 +293,26 @@ export default function WhatsApp() {
     setLoadingMsgs(false)
   }
 
-  // Scroll automático ao fim das mensagens
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  // Scroll para o fim ao receber nova mensagem
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-  // Realtime para novas mensagens
+  // Realtime: mensagens
   useEffect(() => {
     if (!selectedConv?.id) return
-    const channel = supabase
-      .channel(`wa_messages_${selectedConv.id}`)
+    const ch = supabase
+      .channel(`wa_msgs_${selectedConv.id}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'wa_messages',
         filter: `conversation_id=eq.${selectedConv.id}`,
-      }, payload => {
-        setMessages(prev => [...prev, payload.new as WaMessage])
-      })
+      }, payload => setMessages(prev => [...prev, payload.new as WaMessage]))
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { supabase.removeChannel(ch) }
   }, [selectedConv?.id])
 
-  // Realtime para atualizar lista de conversas (última mensagem)
+  // Realtime: lista de conversas
   useEffect(() => {
     if (!selectedInstance?.id) return
-    const channel = supabase
+    const ch = supabase
       .channel(`wa_convs_${selectedInstance.id}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'wa_conversations',
@@ -278,36 +326,67 @@ export default function WhatsApp() {
         })
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { supabase.removeChannel(ch) }
   }, [selectedInstance?.id])
 
-  async function sendMessage() {
-    if (!selectedConv || !sendText.trim() || sending) return
-    setSending(true)
-    const text = sendText.trim()
-    setSendText('')
+  // ── Arquivo ──
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    if (file.size > 64 * 1024 * 1024) { alert('Arquivo muito grande. Limite: 64 MB.'); return }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string
+      setAttachedFile({
+        file,
+        base64:  dataUrl.split(',')[1],
+        preview: file.type.startsWith('image/') ? dataUrl : null,
+        mimetype: file.type,
+      })
+    }
+    reader.readAsDataURL(file)
+  }
 
-    // Mensagem otimista
+  // ── Envio ──
+  async function sendMessage() {
+    if (!selectedConv || (!sendText.trim() && !attachedFile) || sending) return
+    setSending(true)
+    const text  = sendText.trim()
+    const media = attachedFile
+    setSendText(''); setAttachedFile(null)
+
+    const previewContent = text || (
+      media?.mimetype.startsWith('image/')   ? '[imagem]'  :
+      media?.mimetype.startsWith('video/')   ? '[vídeo]'   :
+      media?.mimetype.startsWith('audio/')   ? '[áudio]'   :
+      media?.file.name ?? '[arquivo]'
+    )
+
+    const tempId = crypto.randomUUID()
     const tempMsg: WaMessage = {
-      id: crypto.randomUUID(),
-      direction: 'outbound',
-      content: text,
-      status: 'pending',
+      id:         tempId,
+      direction:  'outbound',
+      content:    previewContent,
+      status:     'pending',
       created_at: new Date().toISOString(),
+      media_url:  media?.preview ?? null,
+      media_type: media?.mimetype ?? null,
     }
     setMessages(prev => [...prev, tempMsg])
 
     try {
       const res = await supabase.functions.invoke('fn-wa-send', {
-        body: { conversation_id: selectedConv.id, text },
+        body: {
+          conversation_id: selectedConv.id,
+          text:  text || undefined,
+          media: media ? { base64: media.base64, mimetype: media.mimetype, filename: media.file.name } : undefined,
+        },
       })
       if (res.error || !res.data?.ok) throw new Error(res.data?.error ?? 'Falha ao enviar')
-      // Remove mensagem otimista (realtime ou reload vai trazer a real)
-      setMessages(prev => prev.filter(m => m.id !== tempMsg.id))
-    } catch (err: any) {
-      setMessages(prev => prev.map(m =>
-        m.id === tempMsg.id ? { ...m, status: 'failed' } : m
-      ))
+      setMessages(prev => prev.filter(m => m.id !== tempId))
+    } catch {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'failed' } : m))
     } finally {
       setSending(false)
       inputRef.current?.focus()
@@ -320,10 +399,8 @@ export default function WhatsApp() {
 
   function formatTime(iso: string | null) {
     if (!iso) return ''
-    const d = new Date(iso)
-    const now = new Date()
-    const isToday = d.toDateString() === now.toDateString()
-    return isToday
+    const d = new Date(iso), now = new Date()
+    return d.toDateString() === now.toDateString()
       ? d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
       : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   }
@@ -341,7 +418,7 @@ export default function WhatsApp() {
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="shrink-0 border-b border-slate-200 bg-white px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
@@ -354,8 +431,6 @@ export default function WhatsApp() {
             </p>
           </div>
         </div>
-
-        {/* Tabs */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
           {(['connections', 'inbox'] as const).map(t => (
             <button
@@ -386,7 +461,6 @@ export default function WhatsApp() {
               </button>
             </div>
 
-            {/* Form nova instância */}
             {showNewInst && (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                 <div className="text-sm font-semibold">Nova conexão WhatsApp</div>
@@ -401,7 +475,7 @@ export default function WhatsApp() {
                   />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 mb-1">Loja (opcional — deixe vazio para empresa toda)</div>
+                  <div className="text-xs text-slate-500 mb-1">Loja (opcional)</div>
                   <select
                     value={newStoreId}
                     onChange={e => setNewStoreId(e.target.value)}
@@ -424,7 +498,6 @@ export default function WhatsApp() {
               </div>
             )}
 
-            {/* Lista de instâncias */}
             {loadingInst ? (
               <div className="flex items-center justify-center py-12 text-slate-400">
                 <Loader2 size={20} className="animate-spin mr-2" /> Carregando…
@@ -438,8 +511,12 @@ export default function WhatsApp() {
             ) : (
               instances.map(inst => (
                 <div key={inst.id} className="rounded-2xl border bg-white p-4 flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${inst.status === 'connected' ? 'bg-emerald-100' : inst.status === 'connecting' ? 'bg-amber-100' : 'bg-slate-100'}`}>
-                    <Smartphone size={16} className={inst.status === 'connected' ? 'text-emerald-600' : inst.status === 'connecting' ? 'text-amber-500' : 'text-slate-400'} />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                    inst.status === 'connected' ? 'bg-emerald-100' : inst.status === 'connecting' ? 'bg-amber-100' : 'bg-slate-100'
+                  }`}>
+                    <Smartphone size={16} className={
+                      inst.status === 'connected' ? 'text-emerald-600' : inst.status === 'connecting' ? 'text-amber-500' : 'text-slate-400'
+                    } />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm text-slate-800 truncate">{inst.label}</div>
@@ -471,7 +548,9 @@ export default function WhatsApp() {
                       </button>
                     )}
                     {inst.status === 'connected' && (
-                      <button onClick={() => disconnectInstance(inst)} className="text-xs text-slate-400 hover:text-amber-600 transition-colors cursor-pointer px-1">Desconectar</button>
+                      <button onClick={() => disconnectInstance(inst)} className="text-xs text-slate-400 hover:text-amber-600 transition-colors cursor-pointer px-1">
+                        Desconectar
+                      </button>
                     )}
                     <button onClick={() => deleteInstance(inst)} className="text-slate-300 hover:text-rose-500 transition-colors cursor-pointer p-1">
                       <X size={14} />
@@ -488,10 +567,8 @@ export default function WhatsApp() {
       {tab === 'inbox' && (
         <div className="flex-1 flex min-h-0">
 
-          {/* Sidebar: instâncias + conversas */}
+          {/* Sidebar: instância + conversas */}
           <div className="w-72 shrink-0 border-r border-slate-200 flex flex-col">
-
-            {/* Seletor de instância */}
             <div className="border-b border-slate-100 p-3">
               <select
                 value={selectedInstance?.id ?? ''}
@@ -510,7 +587,6 @@ export default function WhatsApp() {
               </select>
             </div>
 
-            {/* Lista de conversas */}
             <div className="flex-1 overflow-y-auto">
               {!selectedInstance ? (
                 <div className="p-4 text-center text-xs text-slate-400 mt-4">
@@ -589,7 +665,9 @@ export default function WhatsApp() {
                       <Loader2 size={18} className="animate-spin mr-2" />
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="text-center text-xs text-slate-400 py-8">Sem mensagens nesta conversa.</div>
+                    <div className="text-center text-xs text-slate-400 py-8">
+                      Sem mensagens nesta conversa.
+                    </div>
                   ) : (
                     messages.map(msg => (
                       <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
@@ -598,10 +676,19 @@ export default function WhatsApp() {
                             ? `bg-emerald-500 text-white rounded-tr-sm ${msg.status === 'failed' ? 'opacity-60' : ''}`
                             : 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm'
                         }`}>
-                          <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                          {msg.media_url && msg.media_type ? (
+                            <MediaBubble
+                              url={msg.media_url}
+                              type={msg.media_type}
+                              content={msg.content}
+                              isOutbound={msg.direction === 'outbound'}
+                            />
+                          ) : (
+                            <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                          )}
                           <div className={`text-[10px] mt-1 ${msg.direction === 'outbound' ? 'text-emerald-100' : 'text-slate-400'}`}>
                             {formatTime(msg.created_at)}
-                            {msg.status === 'failed' && ' · falhou'}
+                            {msg.status === 'failed'  && ' · falhou'}
                             {msg.status === 'pending' && ' · enviando…'}
                           </div>
                         </div>
@@ -611,21 +698,72 @@ export default function WhatsApp() {
                   <div ref={bottomRef} />
                 </div>
 
+                {/* Preview do arquivo anexado */}
+                {attachedFile && (
+                  <div className="shrink-0 bg-white border-t border-slate-100 px-4 pt-3 pb-0">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-2">
+                      {attachedFile.preview ? (
+                        <img src={attachedFile.preview} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                      ) : attachedFile.mimetype.startsWith('audio/') ? (
+                        <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                          <Music size={20} className="text-emerald-600" />
+                        </div>
+                      ) : attachedFile.mimetype.startsWith('video/') ? (
+                        <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                          <FileText size={20} className="text-blue-500" />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
+                          <FileText size={20} className="text-slate-500" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-slate-700 truncate">{attachedFile.file.name}</div>
+                        <div className="text-xs text-slate-400">
+                          {attachedFile.file.size > 1024 * 1024
+                            ? `${(attachedFile.file.size / 1024 / 1024).toFixed(1)} MB`
+                            : `${(attachedFile.file.size / 1024).toFixed(0)} KB`}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setAttachedFile(null)}
+                        className="text-slate-400 hover:text-rose-500 cursor-pointer p-1 shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Input de envio */}
-                <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 flex items-end gap-2">
-                  {selectedInstance?.status !== 'connected' && (
-                    <div className="flex-1 text-xs text-amber-600 text-center py-2">
+                <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3">
+                  {selectedInstance?.status !== 'connected' ? (
+                    <div className="text-xs text-amber-600 text-center py-2">
                       Instância desconectada. Reconecte na aba Conexões.
                     </div>
-                  )}
-                  {selectedInstance?.status === 'connected' && (
-                    <>
+                  ) : (
+                    <div className="flex items-end gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,video/*,audio/*,application/pdf"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={sending}
+                        title="Anexar imagem, vídeo, áudio ou PDF"
+                        className="h-[42px] w-[42px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 disabled:opacity-40"
+                      >
+                        <Paperclip size={18} />
+                      </button>
                       <textarea
                         ref={inputRef}
                         value={sendText}
                         onChange={e => setSendText(e.target.value)}
                         onKeyDown={handleKey}
-                        placeholder="Escreva uma mensagem… (Enter para enviar)"
+                        placeholder={attachedFile ? 'Legenda (opcional)…' : 'Escreva uma mensagem… (Enter para enviar)'}
                         rows={1}
                         disabled={sending}
                         className="flex-1 resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 transition-colors min-h-[42px] max-h-[120px] overflow-y-auto"
@@ -633,12 +771,12 @@ export default function WhatsApp() {
                       />
                       <button
                         onClick={sendMessage}
-                        disabled={!sendText.trim() || sending}
+                        disabled={(!sendText.trim() && !attachedFile) || sending}
                         className="h-[42px] w-[42px] flex items-center justify-center rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shrink-0"
                       >
                         {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </>

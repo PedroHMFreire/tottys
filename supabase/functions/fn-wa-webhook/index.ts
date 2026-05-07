@@ -1,8 +1,4 @@
-// Edge Function: fn-wa-webhook
-// Recebe todos os eventos da Evolution API e salva no banco
-// URL pública: sem auth JWT (Evolution API faz POST aqui)
-// Segurança: verifica header x-wa-secret
-
+// @ts-nocheck — Deno runtime; Node.js TS compiler não reconhece imports Deno
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0'
 
@@ -13,26 +9,86 @@ function json(data: unknown, status = 200) {
   })
 }
 
+const EXT_MAP: Record<string, string> = {
+  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
+  'video/mp4': 'mp4', 'video/webm': 'webm', 'video/mpeg': 'mpg',
+  'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/aac': 'aac',
+  'application/pdf': 'pdf',
+}
+
+async function fetchAndStoreMedia(
+  supabase: ReturnType<typeof createClient>,
+  evoUrl: string,
+  evoKey: string,
+  instanceName: string,
+  msgKey: any,
+  msgObj: any,
+  companyId: string,
+  convId: string,
+  waMessageId: string,
+): Promise<{ mediaUrl: string | null; mediaType: string | null }> {
+  const isImage    = !!msgObj.imageMessage
+  const isVideo    = !!msgObj.videoMessage
+  const isAudio    = !!msgObj.audioMessage || !!msgObj.pttMessage
+  const isDocument = !!msgObj.documentMessage
+  if (!isImage && !isVideo && !isAudio && !isDocument) return { mediaUrl: null, mediaType: null }
+
+  const mimetype: string =
+    msgObj.imageMessage?.mimetype ??
+    msgObj.videoMessage?.mimetype ??
+    msgObj.audioMessage?.mimetype ??
+    msgObj.pttMessage?.mimetype ??
+    msgObj.documentMessage?.mimetype ??
+    (isImage ? 'image/jpeg' : isVideo ? 'video/mp4' : isAudio ? 'audio/ogg' : 'application/octet-stream')
+
+  try {
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 20_000)
+    const b64Res = await fetch(
+      `${evoUrl}/message/getBase64FromMediaMessage/${instanceName}`,
+      {
+        method: 'POST',
+        headers: { apikey: evoKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: { key: msgKey, message: msgObj } }),
+        signal: ctrl.signal,
+      },
+    ).finally(() => clearTimeout(t))
+
+    if (!b64Res.ok) return { mediaUrl: null, mediaType: null }
+    const b64Data = await b64Res.json()
+    const raw: string | null = b64Data?.base64 ?? b64Data?.data?.base64 ?? null
+    if (!raw) return { mediaUrl: null, mediaType: null }
+
+    const clean = raw.replace(/^data:[^;]+;base64,/, '')
+    const bytes = Uint8Array.from(atob(clean), c => c.charCodeAt(0))
+    const ext = EXT_MAP[mimetype] ?? mimetype.split('/')[1]?.split(';')[0] ?? 'bin'
+    const path = `${companyId}/${convId}/${waMessageId}.${ext}`
+
+    const { error } = await supabase.storage
+      .from('wa-media')
+      .upload(path, bytes, { contentType: mimetype, upsert: true })
+    if (error) { console.error('storage upload:', error); return { mediaUrl: null, mediaType: null } }
+
+    const { data: urlData } = supabase.storage.from('wa-media').getPublicUrl(path)
+    return { mediaUrl: urlData.publicUrl, mediaType: mimetype }
+  } catch (e) {
+    console.error('fetchAndStoreMedia error:', e)
+    return { mediaUrl: null, mediaType: null }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok')
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
 
-  // Verifica secret para evitar chamadas não autorizadas
   const secret = req.headers.get('x-wa-secret') ?? req.headers.get('apikey')
   const expected = Deno.env.get('WA_WEBHOOK_SECRET')
-  if (expected && secret !== expected) {
-    return new Response('Unauthorized', { status: 401 })
-  }
+  if (expected && secret !== expected) return new Response('Unauthorized', { status: 401 })
 
   const body = await req.json().catch(() => null)
   if (!body) return new Response('Bad request', { status: 400 })
 
-  const { event, instance: instanceName, data } = body as {
-    event: string
-    instance: string
-    data: any
-  }
-
+  const { event, instance: instanceName, data } = body as { event: string; instance: string; data: any }
   if (!instanceName || !event) return json({ ok: true })
 
   const supabase = createClient(
@@ -40,73 +96,68 @@ serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
-  // Busca instância pelo nome
   const { data: inst } = await supabase
     .from('wa_instances')
     .select('id, company_id')
     .eq('instance_name', instanceName)
     .maybeSingle()
+  if (!inst) return json({ ok: true })
 
-  if (!inst) return json({ ok: true }) // instância não registrada, ignora
-
-  // ── Conexão atualizada ────────────────────────────────────
+  // ── connection.update ──────────────────────────────────────────────────────
   if (event === 'connection.update') {
     const state = data?.state as string
-    const status = state === 'open' ? 'connected'
-      : state === 'connecting' ? 'connecting'
-      : 'disconnected'
-
-    const phone = data?.instance?.wuid
-      ? String(data.instance.wuid).replace('@s.whatsapp.net', '')
-      : null
-
+    const status = state === 'open' ? 'connected' : state === 'connecting' ? 'connecting' : 'disconnected'
+    const phone = data?.instance?.wuid ? String(data.instance.wuid).replace('@s.whatsapp.net', '') : null
     await supabase.from('wa_instances').update({
       status,
-      phone: status === 'connected' ? phone : undefined,
-      qr_code: status === 'connected' ? null : undefined,
+      phone:      status === 'connected' ? phone : undefined,
+      qr_code:    status === 'connected' ? null  : undefined,
       updated_at: new Date().toISOString(),
     }).eq('id', inst.id)
   }
 
-  // ── QR Code atualizado ────────────────────────────────────
+  // ── qrcode.updated ─────────────────────────────────────────────────────────
   if (event === 'qrcode.updated') {
     await supabase.from('wa_instances').update({
-      status: 'connecting',
-      qr_code: data?.qrcode?.base64 ?? null,
+      status:     'connecting',
+      qr_code:    data?.qrcode?.base64 ?? null,
       updated_at: new Date().toISOString(),
     }).eq('id', inst.id)
   }
 
-  // ── Nova mensagem ─────────────────────────────────────────
+  // ── messages.upsert ────────────────────────────────────────────────────────
   if (event === 'messages.upsert') {
     const msg = Array.isArray(data) ? data[0] : data
     const key = msg?.key
     if (!key?.remoteJid) return json({ ok: true })
 
     const remoteJid = key.remoteJid as string
-    // Ignora mensagens de grupo por enquanto
-    if (remoteJid.endsWith('@g.us') || remoteJid.endsWith('@broadcast')) {
-      return json({ ok: true })
-    }
+    if (remoteJid.endsWith('@g.us') || remoteJid.endsWith('@broadcast')) return json({ ok: true })
 
-    const fromMe = Boolean(key.fromMe)
+    const fromMe      = Boolean(key.fromMe)
     const waMessageId = key.id as string
+    const msgObj      = msg?.message ?? {}
 
-    // Extrai conteúdo de texto (vários tipos de mensagem)
+    const isImage    = !!msgObj.imageMessage
+    const isVideo    = !!msgObj.videoMessage
+    const isAudio    = !!msgObj.audioMessage || !!msgObj.pttMessage
+    const isDocument = !!msgObj.documentMessage
+
     const content: string =
-      msg?.message?.conversation ??
-      msg?.message?.extendedTextMessage?.text ??
-      msg?.message?.imageMessage?.caption ??
-      msg?.message?.videoMessage?.caption ??
-      (msg?.message?.imageMessage ? '[imagem]' : null) ??
-      (msg?.message?.audioMessage ? '[áudio]' : null) ??
-      (msg?.message?.documentMessage ? '[documento]' : null) ??
+      msgObj.conversation ??
+      msgObj.extendedTextMessage?.text ??
+      msgObj.imageMessage?.caption ??
+      msgObj.videoMessage?.caption ??
+      msgObj.documentMessage?.caption ??
+      (isImage    ? '[imagem]'    : null) ??
+      (isVideo    ? '[vídeo]'    : null) ??
+      (isAudio    ? '[áudio]'    : null) ??
+      (isDocument ? (msgObj.documentMessage?.fileName ?? '[documento]') : null) ??
       '[mensagem]'
 
-    const contactName = fromMe ? null : (msg?.pushName as string | null)
+    const contactName  = fromMe ? null : (msg?.pushName as string | null)
     const contactPhone = remoteJid.split('@')[0]
 
-    // Upsert da conversa
     const { data: conv, error: convErr } = await supabase
       .from('wa_conversations')
       .upsert({
@@ -121,20 +172,29 @@ serve(async (req) => {
       .select('id, unread_count')
       .single()
 
-    if (convErr || !conv) {
-      console.error('conv upsert error:', convErr)
-      return json({ ok: false }, 500)
-    }
+    if (convErr || !conv) { console.error('conv upsert:', convErr); return json({ ok: false }, 500) }
 
-    // Incrementa unread só para mensagens recebidas
     if (!fromMe) {
-      await supabase
-        .from('wa_conversations')
+      await supabase.from('wa_conversations')
         .update({ unread_count: (conv.unread_count ?? 0) + 1 })
         .eq('id', conv.id)
     }
 
-    // Salva mensagem (ignora duplicatas via wa_message_id UNIQUE)
+    // Download e armazena mídia
+    const evoUrl = Deno.env.get('EVOLUTION_API_URL')
+    const evoKey = Deno.env.get('EVOLUTION_API_KEY')
+    let mediaUrl: string | null = null
+    let mediaType: string | null = null
+
+    if (evoUrl && evoKey && (isImage || isVideo || isAudio || isDocument)) {
+      const r = await fetchAndStoreMedia(
+        supabase, evoUrl, evoKey, instanceName,
+        key, msgObj, inst.company_id, conv.id, waMessageId,
+      )
+      mediaUrl  = r.mediaUrl
+      mediaType = r.mediaType
+    }
+
     await supabase.from('wa_messages').upsert({
       company_id:      inst.company_id,
       conversation_id: conv.id,
@@ -142,6 +202,8 @@ serve(async (req) => {
       direction:       fromMe ? 'outbound' : 'inbound',
       content,
       status:          'sent',
+      media_url:       mediaUrl,
+      media_type:      mediaType,
     }, { onConflict: 'wa_message_id', ignoreDuplicates: true })
   }
 
