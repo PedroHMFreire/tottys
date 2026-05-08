@@ -44,6 +44,7 @@ import CRM from '@/pages/CRM'
 import CustomerProfile from '@/pages/CustomerProfile'
 import Paulo from '@/pages/Paulo'
 import WhatsApp from '@/pages/WhatsApp'
+import ExtratoCliente from '@/pages/ExtratoCliente'
 
 // Layout
 import AdminLayout from '@/layouts/AdminLayout'
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
   { path: '/gate', element: <Gate /> },
   { path: '/nps', element: <NPS /> },
   { path: '/bloqueado', element: <Bloqueado /> },
+  { path: '/extrato/:token', element: <ExtratoCliente /> },
 
   // ── Grupo LOJA (PDV) — requer empresa/loja selecionada ────────────────────
   { path: '/loja',          element: <RequireCompany><Home /></RequireCompany> },

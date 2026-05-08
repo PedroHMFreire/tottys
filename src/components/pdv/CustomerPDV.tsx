@@ -11,6 +11,7 @@ export type SelectedCustomer = {
   email?: string | null
   cashback_saldo: number
   cashback_tier: string | null
+  access_token?: string | null
 }
 
 const TIER_LABEL: Record<string, string> = {
@@ -65,7 +66,7 @@ export default function CustomerPDV({ companyId, value, onChange }: Props) {
     debounceRef.current = window.setTimeout(async () => {
       const { data } = await supabase
         .from('customers')
-        .select('id, nome, contato, email, cashback_saldo, cashback_tier')
+        .select('id, nome, contato, email, cashback_saldo, cashback_tier, access_token')
         .eq('company_id', companyId)
         .or(`nome.ilike.%${q}%,cpf_cnpj.ilike.%${q}%,contato.ilike.%${q}%`)
         .limit(8)

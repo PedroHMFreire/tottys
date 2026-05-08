@@ -605,9 +605,13 @@ export default function Sell() {
               if (selectedCustomer.contato) {
                 try {
                   const novoSaldo = selectedCustomer.cashback_saldo + cb.credito
+                  const extratoUrl = selectedCustomer.access_token
+                    ? `${window.location.origin}/extrato/${selectedCustomer.access_token}`
+                    : null
+                  const linkLine = extratoUrl ? `\n\n📊 Veja seu extrato: ${extratoUrl}` : ''
                   const waMsg = cb.subiu_tier
-                    ? `Olá, ${selectedCustomer.nome}! 🎉 Você ganhou *${formatBRL(cb.credito)}* de cashback e subiu para o nível *${cb.tier_novo}*! 💰 Saldo: *${formatBRL(novoSaldo)}*. Use na próxima visita!`
-                    : `Olá, ${selectedCustomer.nome}! 🛍️ Você ganhou *${formatBRL(cb.credito)}* de cashback nesta compra. 💰 Saldo atual: *${formatBRL(novoSaldo)}*. Use na próxima visita!`
+                    ? `Olá, ${selectedCustomer.nome}! 🎉 Você ganhou *${formatBRL(cb.credito)}* de cashback e subiu para o nível *${cb.tier_novo}*! 💰 Saldo: *${formatBRL(novoSaldo)}*.${linkLine}`
+                    : `Olá, ${selectedCustomer.nome}! 🛍️ Você ganhou *${formatBRL(cb.credito)}* de cashback nesta compra. 💰 Saldo atual: *${formatBRL(novoSaldo)}*.${linkLine}`
                   await supabase.from('wa_message_queue').insert({
                     company_id: company.id,
                     customer_phone: selectedCustomer.contato,
