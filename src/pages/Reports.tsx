@@ -257,10 +257,21 @@ export default function Reports() {
   type CurvaAbcRow = { product_id: string; nome: string; sku: string; qtde_total: number; receita: number; curva?: 'A' | 'B' | 'C' }
   type InadimplenciaRow = { customer_id: string; nome: string; contato: string | null; score_interno: string; parcelas_atrasadas: number; total_aberto: number; total_atrasado: number; primeiro_atraso: string | null }
 
+  type GradeVendasRow = { product_id: string; nome: string; qtde_familia: number; receita_familia: number; tamanho: string; cor: string; qtde: number }
+  type FamiliaGrade = {
+    product_id: string; nome: string; qtde_familia: number; receita_familia: number
+    cores: string[]
+    tamanhos: string[]
+    grade: Map<string, Map<string, number>> // cor → tamanho → qtde
+  }
+
   const [rankingVariante, setRankingVariante] = useState<RankingVarianteRow[]>([])
   const [giroColecao, setGiroColecao] = useState<GiroColecaoRow[]>([])
   const [curvaAbc, setCurvaAbc] = useState<CurvaAbcRow[]>([])
   const [inadimplencia, setInadimplencia] = useState<InadimplenciaRow[]>([])
+  const [gradeVendas, setGradeVendas] = useState<GradeVendasRow[]>([])
+  const [expandedFamilia, setExpandedFamilia] = useState<string | null>(null)
+  const [gradeCor, setGradeCor] = useState<Record<string, string>>({})
   const [loadingFashion, setLoadingFashion] = useState(false)
 
   const canLoad = scope === 'global' ? isOwner : !!company?.id
@@ -445,11 +456,12 @@ export default function Reports() {
     try {
       const fromTs = new Date(from + 'T00:00:00').toISOString()
       const toTs   = new Date(to   + 'T23:59:59').toISOString()
-      const [rv, gc, abc, inadimp] = await Promise.all([
+      const [rv, gc, abc, inadimp, gv] = await Promise.all([
         supabase.rpc('fn_ranking_variante',     { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
         supabase.rpc('fn_giro_colecao',         { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
         supabase.rpc('fn_curva_abc',            { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
         supabase.rpc('fn_inadimplencia_resumo', { p_company_id: cId }),
+        supabase.rpc('fn_grade_vendas',         { p_company_id: cId, p_store_id: sId, p_from: fromTs, p_to: toTs }),
       ])
       setRankingVariante((rv.data || []) as RankingVarianteRow[])
       setGiroColecao((gc.data || []) as GiroColecaoRow[])
@@ -463,6 +475,7 @@ export default function Reports() {
       })
       setCurvaAbc(classified)
       setInadimplencia((inadimp.data || []) as InadimplenciaRow[])
+      setGradeVendas((gv.data || []) as GradeVendasRow[])
     } finally {
       setLoadingFashion(false)
     }
@@ -1069,6 +1082,127 @@ export default function Reports() {
                 {loadingFashion ? 'Carregando…' : 'Atualizar'}
               </Button>
             </div>
+
+            {/* ── Análise de compra por família ── */}
+            <Card title="Análise de compra — grade por família">
+              <div className="text-xs text-slate-400 mb-3">
+                Clique em um produto para ver quantas peças de cada tamanho × cor foram vendidas no período. Use para planejar reposição.
+              </div>
+              {loadingFashion ? (
+                <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />)}</div>
+              ) : gradeVendas.length === 0 ? (
+                <div className="text-sm text-slate-400">Nenhuma venda no período.</div>
+              ) : (() => {
+                // Agrupar rows por família
+                const famMap = new Map<string, FamiliaGrade>()
+                for (const r of gradeVendas) {
+                  if (!famMap.has(r.product_id)) {
+                    famMap.set(r.product_id, {
+                      product_id: r.product_id, nome: r.nome,
+                      qtde_familia: Number(r.qtde_familia),
+                      receita_familia: Number(r.receita_familia),
+                      cores: [], tamanhos: [],
+                      grade: new Map(),
+                    })
+                  }
+                  const fam = famMap.get(r.product_id)!
+                  if (!fam.cores.includes(r.cor)) fam.cores.push(r.cor)
+                  if (!fam.tamanhos.includes(r.tamanho)) fam.tamanhos.push(r.tamanho)
+                  if (!fam.grade.has(r.cor)) fam.grade.set(r.cor, new Map())
+                  fam.grade.get(r.cor)!.set(r.tamanho, Number(r.qtde))
+                }
+                const familias = Array.from(famMap.values()).slice(0, 30)
+                const maxReceita = familias[0]?.receita_familia || 1
+
+                return (
+                  <div className="space-y-1.5">
+                    {familias.map(fam => {
+                      const isOpen = expandedFamilia === fam.product_id
+                      const corSel = gradeCor[fam.product_id] || fam.cores[0] || '-'
+                      const tamMap = fam.grade.get(corSel) || new Map()
+                      const maxQtde = Math.max(...Array.from(tamMap.values()), 1)
+
+                      return (
+                        <div key={fam.product_id} className="rounded-xl border border-slate-200 overflow-hidden">
+                          {/* Linha da família */}
+                          <button
+                            onClick={() => setExpandedFamilia(isOpen ? null : fam.product_id)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors text-left cursor-pointer"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm text-slate-800 truncate">{fam.nome}</div>
+                              <div className="h-1 mt-1.5 bg-slate-100 rounded-full overflow-hidden w-full">
+                                <div className="h-full bg-primary rounded-full" style={{ width: `${(fam.receita_familia / maxReceita) * 100}%` }} />
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0 ml-2">
+                              <div className="font-semibold text-azure text-sm">{formatBRL(fam.receita_familia)}</div>
+                              <div className="text-xs text-slate-400">{fam.qtde_familia} un.</div>
+                            </div>
+                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" className={`shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}>
+                              <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+
+                          {/* Grade expandida */}
+                          {isOpen && (
+                            <div className="border-t border-slate-100 bg-slate-50/60 px-3 py-3 space-y-3">
+                              {/* Filtro de cor */}
+                              {fam.cores.length > 1 && (
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {fam.cores.map(c => (
+                                    <button
+                                      key={c}
+                                      onClick={() => setGradeCor(prev => ({ ...prev, [fam.product_id]: c }))}
+                                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${
+                                        corSel === c ? 'bg-primary text-white border-azure' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      {c}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Grid tamanho */}
+                              <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(fam.tamanhos.length, 8)}, minmax(0, 1fr))` }}>
+                                {fam.tamanhos.map(tam => {
+                                  const q = tamMap.get(tam) || 0
+                                  const pct = Math.round((q / maxQtde) * 100)
+                                  return (
+                                    <div key={tam} className="flex flex-col items-center gap-0.5">
+                                      <div className="text-xs text-slate-500 font-mono font-medium">{tam}</div>
+                                      <div className="w-full h-8 bg-slate-200 rounded-lg overflow-hidden flex items-end">
+                                        <div
+                                          className="w-full rounded-lg transition-all"
+                                          style={{
+                                            height: `${Math.max(pct, q > 0 ? 10 : 0)}%`,
+                                            background: pct > 60 ? '#1E40AF' : pct > 30 ? '#3B82F6' : '#BFDBFE',
+                                          }}
+                                        />
+                                      </div>
+                                      <div className={`text-xs font-bold ${q === 0 ? 'text-slate-300' : 'text-slate-700'}`}>{q}</div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                              {fam.cores.length === 1 && fam.cores[0] !== '-' && (
+                                <div className="text-xs text-slate-400">Cor: <span className="font-medium text-slate-600">{fam.cores[0]}</span></div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+              {gradeVendas.length > 0 && (
+                <div className="mt-3">
+                  <Button onClick={() => csvDownload('grade_compra', gradeVendas)}>Exportar CSV</Button>
+                </div>
+              )}
+            </Card>
 
             <Card title="Ranking tamanho × cor">
               <div className="text-xs text-slate-400 mb-3">Variantes mais vendidas no período.</div>

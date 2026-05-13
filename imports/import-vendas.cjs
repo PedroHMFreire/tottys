@@ -69,7 +69,12 @@ function mapMode(forma) {
 
 // ── Main ───────────────────────────────────────────────────────────────────
 
+// Modo: 'full' (padrão) ou 'items-only' (reusa vendas existentes, só insere itens)
+const MODE = process.argv[2] === '--items-only' ? 'items-only' : 'full'
+
 async function main() {
+  console.log(`\n🚀 Modo: ${MODE}`)
+
   // ── Lookup maps ───────────────────────────────────────────────────────────
   console.log('\n📚 Carregando dados de referência...')
 
@@ -85,17 +90,17 @@ async function main() {
   }
   console.log(`   Clientes:   ${customerMap.size}`)
 
-  // Carrega variantes em páginas (podem ser muitas)
-  const variantMap = new Map()
+  // Carrega variantes por SKU (sku = CodigoNFe do sistema legado, ex: "142912-12")
+  const variantMap = new Map() // sku → { id, product_id }
   let vPage = 0
   while (true) {
     const { data: vd } = await supabase
       .from('product_variants')
-      .select('id, product_id, external_id')
-      .not('external_id', 'is', null)
+      .select('id, product_id, sku')
+      .not('sku', 'is', null)
       .range(vPage * 1000, vPage * 1000 + 999)
     if (!vd || !vd.length) break
-    for (const v of vd) variantMap.set(String(v.external_id), { id: v.id, product_id: v.product_id })
+    for (const v of vd) variantMap.set(String(v.sku).trim(), { id: v.id, product_id: v.product_id })
     vPage++
   }
   console.log(`   Variantes:  ${variantMap.size}`)
@@ -191,27 +196,44 @@ async function main() {
       })))
     }
 
-    // ── Inserir sales ──────────────────────────────────────────────────────
-    console.log(`\n   ⏳ Inserindo ${salesRows.length} vendas...`)
+    // ── Inserir OU recuperar sales ─────────────────────────────────────────
     const insertedMap = new Map() // external_id → sale uuid
 
-    for (let i = 0; i < salesRows.length; i += BATCH) {
-      const batch = salesRows.slice(i, i + BATCH)
-      const { data, error } = await supabase
-        .from('sales')
-        .insert(batch)
-        .select('id, external_id')
-
-      if (error) {
-        console.error(`\n   ❌ Erro sales lote ${Math.floor(i / BATCH) + 1}:`, error.message)
-        errosSales++
-        continue
+    if (MODE === 'items-only') {
+      // Recupera IDs das vendas já existentes
+      console.log(`\n   ⏳ Recuperando ${salesRows.length} vendas existentes...`)
+      const extIds = salesRows.map(s => s.external_id)
+      for (let i = 0; i < extIds.length; i += BATCH) {
+        const slice = extIds.slice(i, i + BATCH)
+        const { data } = await supabase
+          .from('sales')
+          .select('id, external_id')
+          .eq('store_id', storeId)
+          .in('external_id', slice)
+        for (const s of data || []) insertedMap.set(s.external_id, s.id)
+        process.stdout.write(`\r   ⏳ Recuperadas: ${Math.min(i + BATCH, extIds.length)}/${extIds.length}`)
       }
-      for (const s of data || []) insertedMap.set(s.external_id, s.id)
-      process.stdout.write(`\r   ⏳ Vendas: ${Math.min(i + BATCH, salesRows.length)}/${salesRows.length}`)
+      console.log(`\n   ✅ ${insertedMap.size} vendas localizadas`)
+    } else {
+      console.log(`\n   ⏳ Inserindo ${salesRows.length} vendas...`)
+      for (let i = 0; i < salesRows.length; i += BATCH) {
+        const batch = salesRows.slice(i, i + BATCH)
+        const { data, error } = await supabase
+          .from('sales')
+          .insert(batch)
+          .select('id, external_id')
+
+        if (error) {
+          console.error(`\n   ❌ Erro sales lote ${Math.floor(i / BATCH) + 1}:`, error.message)
+          errosSales++
+          continue
+        }
+        for (const s of data || []) insertedMap.set(s.external_id, s.id)
+        process.stdout.write(`\r   ⏳ Vendas: ${Math.min(i + BATCH, salesRows.length)}/${salesRows.length}`)
+      }
+      console.log(`\n   ✅ ${insertedMap.size} vendas inseridas`)
+      totalSales += insertedMap.size
     }
-    console.log(`\n   ✅ ${insertedMap.size} vendas inseridas`)
-    totalSales += insertedMap.size
 
     // ── Inserir itens ──────────────────────────────────────────────────────
     const allItems = []
